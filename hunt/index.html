@@ -1,0 +1,1016 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShieldClaw Hunt - AI Pentesting Dashboard</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+        :root {
+            --void: #000000;
+            --void-light: #0a0a0f;
+            --void-lighter: #111118;
+            --primary: #a78bfa;
+            --primary-glow: rgba(167, 139, 250, 0.5);
+            --secondary: #60a5fa;
+            --accent: #f472b6;
+            --success: #22c55e;
+            --warning: #eab308;
+            --danger: #ef4444;
+            --white: #ffffff;
+            --text: #e4e4e7;
+            --text-dim: #a1a1aa;
+            --glass: rgba(255, 255, 255, 0.05);
+            --glass-strong: rgba(255, 255, 255, 0.08);
+            --border: rgba(255, 255, 255, 0.08);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--void);
+            color: var(--text);
+            overflow-x: hidden;
+        }
+
+        /* Animated Background */
+        .bg-mesh {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            opacity: 0.4;
+            background: 
+                radial-gradient(circle at 20% 30%, rgba(167, 139, 250, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 60%, rgba(96, 165, 250, 0.15) 0%, transparent 50%);
+            filter: blur(60px);
+            animation: meshMove 20s ease-in-out infinite;
+        }
+
+        @keyframes meshMove {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(30px, -30px) scale(1.1); }
+            66% { transform: translate(-20px, 20px) scale(0.9); }
+        }
+
+        /* Header */
+        .header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(10, 10, 15, 0.8);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            font-size: 32px;
+        }
+
+        .logo-text {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 24px rgba(167, 139, 250, 0.3);
+        }
+
+        .btn-secondary {
+            background: var(--glass);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--glass-strong);
+        }
+
+        /* Main Content */
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 40px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Security Score Hero */
+        .score-hero {
+            text-align: center;
+            padding: 80px 20px;
+            margin-bottom: 60px;
+        }
+
+        .score-circle {
+            width: 280px;
+            height: 280px;
+            margin: 0 auto 32px;
+            position: relative;
+        }
+
+        .score-ring {
+            width: 100%;
+            height: 100%;
+            transform: rotate(-90deg);
+        }
+
+        .score-ring circle {
+            fill: none;
+            stroke-width: 20;
+        }
+
+        .score-ring-bg {
+            stroke: var(--glass);
+        }
+
+        .score-ring-progress {
+            stroke: url(#scoreGradient);
+            stroke-linecap: round;
+            stroke-dasharray: 753;
+            stroke-dashoffset: 753;
+            animation: fillScore 2s ease-out forwards;
+        }
+
+        @keyframes fillScore {
+            to {
+                stroke-dashoffset: calc(753 - (753 * var(--score) / 100));
+            }
+        }
+
+        .score-value {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 80px;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .score-grade {
+            font-size: 32px;
+            color: var(--text-dim);
+            margin-top: 8px;
+        }
+
+        .score-title {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .score-subtitle {
+            font-size: 18px;
+            color: var(--text-dim);
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 24px;
+            margin-bottom: 60px;
+        }
+
+        .stat-card {
+            background: var(--glass);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            backdrop-filter: blur(20px);
+            transition: all 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--primary);
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: var(--text-dim);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .stat-value {
+            font-size: 48px;
+            font-weight: 900;
+            margin-bottom: 8px;
+        }
+
+        .stat-value.critical { color: var(--danger); }
+        .stat-value.high { color: #fb923c; }
+        .stat-value.medium { color: var(--warning); }
+        .stat-value.success { color: var(--success); }
+
+        .stat-change {
+            font-size: 13px;
+            color: var(--text-dim);
+        }
+
+        /* Vulnerabilities List */
+        .section {
+            margin-bottom: 60px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .section-title {
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .vuln-list {
+            display: grid;
+            gap: 16px;
+        }
+
+        .vuln-card {
+            background: var(--glass);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            backdrop-filter: blur(20px);
+            transition: all 0.3s;
+        }
+
+        .vuln-card:hover {
+            border-color: var(--primary);
+            transform: translateX(4px);
+        }
+
+        .vuln-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 16px;
+        }
+
+        .vuln-title-group {
+            flex: 1;
+        }
+
+        .vuln-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .vuln-category {
+            font-size: 12px;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .severity-badge {
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .severity-critical {
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: var(--danger);
+        }
+
+        .severity-high {
+            background: rgba(251, 146, 60, 0.15);
+            border: 1px solid rgba(251, 146, 60, 0.3);
+            color: #fb923c;
+        }
+
+        .severity-medium {
+            background: rgba(234, 179, 8, 0.15);
+            border: 1px solid rgba(234, 179, 8, 0.3);
+            color: var(--warning);
+        }
+
+        .severity-low {
+            background: rgba(34, 197, 94, 0.15);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            color: var(--success);
+        }
+
+        .vuln-description {
+            color: var(--text-dim);
+            margin-bottom: 16px;
+            line-height: 1.6;
+        }
+
+        .vuln-impact {
+            background: rgba(239, 68, 68, 0.1);
+            border-left: 3px solid var(--danger);
+            padding: 12px 16px;
+            margin-bottom: 16px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .vuln-fix {
+            background: var(--void-lighter);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            margin-top: 16px;
+        }
+
+        .fix-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .fix-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--success);
+        }
+
+        .btn-fix {
+            padding: 6px 12px;
+            background: var(--success);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-fix:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(34, 197, 94, 0.3);
+        }
+
+        .fix-code {
+            background: var(--void);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            color: var(--text);
+            overflow-x: auto;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .fix-code pre {
+            margin: 0;
+        }
+
+        /* Timeline */
+        .timeline {
+            position: relative;
+            padding-left: 40px;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 8px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: linear-gradient(180deg, var(--primary), var(--secondary));
+        }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 32px;
+        }
+
+        .timeline-dot {
+            position: absolute;
+            left: -36px;
+            top: 4px;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--primary);
+            border: 3px solid var(--void);
+        }
+
+        .timeline-content {
+            background: var(--glass);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            backdrop-filter: blur(20px);
+        }
+
+        .timeline-title {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .timeline-desc {
+            font-size: 14px;
+            color: var(--text-dim);
+            margin-bottom: 8px;
+        }
+
+        .timeline-time {
+            font-size: 12px;
+            color: var(--text-dim);
+        }
+
+        /* Filters */
+        .filters {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 8px 16px;
+            background: var(--glass);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .filter-btn:hover,
+        .filter-btn.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+        }
+
+        /* Loading State */
+        .loading {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid var(--glass);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .score-circle {
+                width: 200px;
+                height: 200px;
+            }
+
+            .score-value {
+                font-size: 60px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Background -->
+    <div class="bg-mesh"></div>
+
+    <!-- Header -->
+    <div class="header">
+        <div class="logo">
+            <span class="logo-icon">🗡️</span>
+            <span class="logo-text">ShieldClaw Hunt</span>
+        </div>
+        <div class="header-actions">
+            <button class="btn btn-secondary" onclick="downloadReport()">
+                📄 Export Report
+            </button>
+            <button class="btn btn-primary" onclick="runNewScan()">
+                ⚔️ Run New Scan
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container">
+        <!-- Security Score Hero -->
+        <div class="score-hero">
+            <div class="score-circle" style="--score: 72">
+                <svg class="score-ring" viewBox="0 0 280 280">
+                    <defs>
+                        <linearGradient id="scoreGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#a78bfa"/>
+                            <stop offset="100%" stop-color="#60a5fa"/>
+                        </linearGradient>
+                    </defs>
+                    <circle class="score-ring-bg" cx="140" cy="140" r="120"/>
+                    <circle class="score-ring-progress" cx="140" cy="140" r="120"/>
+                </svg>
+                <div class="score-value">72</div>
+            </div>
+            <div class="score-grade">Grade: C</div>
+            <h1 class="score-title">Security Assessment Complete</h1>
+            <p class="score-subtitle">Last scan: 2 hours ago • Next scan: in 5 days</p>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Critical</div>
+                <div class="stat-value critical">1</div>
+                <div class="stat-change">Fix immediately</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">High</div>
+                <div class="stat-value high">2</div>
+                <div class="stat-change">Within 7 days</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Medium</div>
+                <div class="stat-value medium">3</div>
+                <div class="stat-change">Within 30 days</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Total Tests</div>
+                <div class="stat-value success">8</div>
+                <div class="stat-change">All categories</div>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="section">
+            <div class="section-header">
+                <h2 class="section-title">Vulnerabilities Found</h2>
+            </div>
+            <div class="filters">
+                <button class="filter-btn active" onclick="filterVulns('all')">All</button>
+                <button class="filter-btn" onclick="filterVulns('critical')">Critical</button>
+                <button class="filter-btn" onclick="filterVulns('high')">High</button>
+                <button class="filter-btn" onclick="filterVulns('medium')">Medium</button>
+                <button class="filter-btn" onclick="filterVulns('low')">Low</button>
+            </div>
+
+            <!-- Vulnerabilities List -->
+            <div class="vuln-list" id="vulnList">
+                <!-- Critical Vulnerability -->
+                <div class="vuln-card" data-severity="critical">
+                    <div class="vuln-header">
+                        <div class="vuln-title-group">
+                            <h3 class="vuln-title">
+                                <span>⚠️</span>
+                                <span>Gateway Exposed Without Authentication</span>
+                            </h3>
+                            <p class="vuln-category">Gateway Exposure</p>
+                        </div>
+                        <span class="severity-badge severity-critical">Critical</span>
+                    </div>
+                    <p class="vuln-description">
+                        Your OpenClaw gateway is publicly accessible on the internet without any authentication. 
+                        This allows anyone to send requests to your AI agent, potentially causing unauthorized access, 
+                        data exfiltration, or resource exhaustion.
+                    </p>
+                    <div class="vuln-impact">
+                        <strong>Impact:</strong> Attackers can fully control your OpenClaw instance, access sensitive data, 
+                        execute arbitrary skills, and rack up API costs.
+                    </div>
+                    <div class="vuln-fix">
+                        <div class="fix-header">
+                            <span class="fix-title">🔧 Auto-Generated Fix Available</span>
+                            <button class="btn-fix" onclick="applyFix(1)">Apply Fix</button>
+                        </div>
+                        <div class="fix-code">
+                            <pre>{
+  "gateway": {
+    "bind": "127.0.0.1",
+    "authentication": {
+      "enabled": true,
+      "method": "token",
+      "token": "GENERATE_SECURE_TOKEN"
+    },
+    "rate_limiting": {
+      "enabled": true,
+      "requests_per_minute": 60
+    }
+  }
+}</pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- High Vulnerability -->
+                <div class="vuln-card" data-severity="high">
+                    <div class="vuln-header">
+                        <div class="vuln-title-group">
+                            <h3 class="vuln-title">
+                                <span>⚠️</span>
+                                <span>Unverified Skills With Dangerous Permissions</span>
+                            </h3>
+                            <p class="vuln-category">Skill Tampering</p>
+                        </div>
+                        <span class="severity-badge severity-high">High</span>
+                    </div>
+                    <p class="vuln-description">
+                        Found 2 unverified skills with dangerous permissions (file-manager, custom-skill). 
+                        These skills have not been vetted and request file system and network access.
+                    </p>
+                    <div class="vuln-impact">
+                        <strong>Impact:</strong> Malicious skills could steal data, execute unauthorized commands, 
+                        or compromise the entire deployment.
+                    </div>
+                    <div class="vuln-fix">
+                        <div class="fix-header">
+                            <span class="fix-title">🔧 Auto-Generated Fix Available</span>
+                            <button class="btn-fix" onclick="applyFix(2)">Apply Fix</button>
+                        </div>
+                        <div class="fix-code">
+                            <pre># Enable skill vetting
+{
+  "skills": {
+    "require_verification": true,
+    "scan_before_install": true,
+    "blocked_permissions": [
+      "file_system_write",
+      "shell_execution"
+    ]
+  }
+}</pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Medium Vulnerability -->
+                <div class="vuln-card" data-severity="medium">
+                    <div class="vuln-header">
+                        <div class="vuln-title-group">
+                            <h3 class="vuln-title">
+                                <span>⚠️</span>
+                                <span>Memory Not Sandboxed</span>
+                            </h3>
+                            <p class="vuln-category">Memory Exploit</p>
+                        </div>
+                        <span class="severity-badge severity-medium">Medium</span>
+                    </div>
+                    <p class="vuln-description">
+                        Memory is not sandboxed between sessions. Cross-session data leaks are possible if an attacker 
+                        can manipulate memory pointers.
+                    </p>
+                    <div class="vuln-impact">
+                        <strong>Impact:</strong> Could lead to information disclosure between different users or sessions.
+                    </div>
+                    <div class="vuln-fix">
+                        <div class="fix-header">
+                            <span class="fix-title">🔧 Auto-Generated Fix Available</span>
+                            <button class="btn-fix" onclick="applyFix(3)">Apply Fix</button>
+                        </div>
+                        <div class="fix-code">
+                            <pre>{
+  "memory": {
+    "sandboxing": {
+      "enabled": true,
+      "per_session": true,
+      "cross_session_isolation": true
+    }
+  }
+}</pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Scan History -->
+        <div class="section">
+            <div class="section-header">
+                <h2 class="section-title">Scan History</h2>
+            </div>
+            <div class="timeline">
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-content">
+                        <div class="timeline-title">Security Scan Completed</div>
+                        <div class="timeline-desc">Found 6 vulnerabilities: 1 critical, 2 high, 3 medium</div>
+                        <div class="timeline-time">2 hours ago</div>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-content">
+                        <div class="timeline-title">Critical Fix Applied</div>
+                        <div class="timeline-desc">Gateway authentication enabled</div>
+                        <div class="timeline-time">1 day ago</div>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-content">
+                        <div class="timeline-title">Weekly Scan Completed</div>
+                        <div class="timeline-desc">Found 3 vulnerabilities: 1 high, 2 medium</div>
+                        <div class="timeline-time">7 days ago</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // API Configuration
+        const API_BASE = window.location.origin;
+        
+        // State
+        let currentData = null;
+        
+        // Load scan results on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            loadScanResults();
+        });
+        
+        // Load scan results from API
+        async function loadScanResults() {
+            try {
+                showLoading();
+                const response = await fetch(`${API_BASE}/api/results`);
+                
+                if (!response.ok) {
+                    // No scan results yet, show demo data
+                    hideLoading();
+                    return;
+                }
+                
+                currentData = await response.json();
+                renderScanResults(currentData);
+                hideLoading();
+            } catch (error) {
+                console.error('Failed to load scan results:', error);
+                hideLoading();
+            }
+        }
+        
+        // Render scan results
+        function renderScanResults(data) {
+            // Update score
+            const scoreCircle = document.querySelector('.score-circle');
+            scoreCircle.style.setProperty('--score', data.score);
+            document.querySelector('.score-value').textContent = data.score;
+            document.querySelector('.score-grade').textContent = `Grade: ${data.grade}`;
+            
+            // Update timestamp
+            const timestamp = new Date(data.timestamp).toLocaleString();
+            document.querySelector('.score-subtitle').textContent = `Last scan: ${timestamp}`;
+            
+            // Update stats
+            document.querySelector('.stat-value.critical').textContent = data.stats.critical;
+            document.querySelector('.stat-value.high').textContent = data.stats.high;
+            document.querySelector('.stat-value.medium').textContent = data.stats.medium;
+            document.querySelector('.stat-value.success').textContent = data.stats.total_tests;
+            
+            // Render vulnerabilities
+            renderVulnerabilities(data.vulnerabilities);
+        }
+        
+        // Render vulnerability cards
+        function renderVulnerabilities(vulns) {
+            const container = document.getElementById('vulnList');
+            
+            if (vulns.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">✅</div>
+                        <h3>No vulnerabilities found!</h3>
+                        <p>Your deployment passed all security tests.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = vulns.map(v => `
+                <div class="vuln-card" data-severity="${v.severity}">
+                    <div class="vuln-header">
+                        <div class="vuln-title-group">
+                            <h3 class="vuln-title">
+                                <span>⚠️</span>
+                                <span>${v.name}</span>
+                            </h3>
+                            <p class="vuln-category">${v.category.replace('_', ' ')}</p>
+                        </div>
+                        <span class="severity-badge severity-${v.severity}">${v.severity}</span>
+                    </div>
+                    <p class="vuln-description">${v.description}</p>
+                    <div class="vuln-impact">
+                        <strong>Impact:</strong> ${v.impact}
+                    </div>
+                    <div class="vuln-fix">
+                        <div class="fix-header">
+                            <span class="fix-title">🔧 Auto-Generated Fix Available</span>
+                            <button class="btn-fix" onclick="applyFix(${v.id})">Apply Fix</button>
+                        </div>
+                        <div class="fix-code">
+                            <pre>${escapeHtml(v.fix.code)}</pre>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // Escape HTML for safe rendering
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        // Show/hide loading
+        function showLoading() {
+            document.getElementById('vulnList').innerHTML = `
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Running security scan...</p>
+                </div>
+            `;
+        }
+        
+        function hideLoading() {
+            // Loading already hidden by rendering results
+        }
+        
+        // Filter vulnerabilities
+        function filterVulns(severity) {
+            const cards = document.querySelectorAll('.vuln-card');
+            const buttons = document.querySelectorAll('.filter-btn');
+            
+            // Update active button
+            buttons.forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // Filter cards
+            cards.forEach(card => {
+                if (severity === 'all' || card.dataset.severity === severity) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
+        // Apply fix
+        async function applyFix(fixId) {
+            if (!confirm('Apply this security fix? This will update your OpenClaw configuration.')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/apply-fix`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ fix_id: fixId })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert(`✅ Fix applied successfully!\n\nYour deployment is now more secure.`);
+                    
+                    // Update button
+                    const btn = event.target;
+                    btn.textContent = '✅ Applied';
+                    btn.disabled = true;
+                    btn.style.background = 'var(--success)';
+                    
+                    // Re-scan after 2 seconds
+                    setTimeout(() => runNewScan(), 2000);
+                } else {
+                    alert(`❌ Failed to apply fix:\n${result.message}`);
+                }
+            } catch (error) {
+                alert(`❌ Error applying fix:\n${error.message}`);
+            }
+        }
+
+        // Download report
+        function downloadReport() {
+            if (!currentData) {
+                alert('No scan data available. Run a scan first.');
+                return;
+            }
+            
+            // Create downloadable JSON report
+            const dataStr = JSON.stringify(currentData, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
+            
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `shieldclaw-hunt-report-${currentData.scan_id}.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            alert('📄 Report downloaded!\n\nSaved as: shieldclaw-hunt-report-' + currentData.scan_id + '.json');
+        }
+
+        // Run new scan
+        async function runNewScan() {
+            if (!confirm('Start a new penetration test? This will take 2-3 minutes.')) {
+                return;
+            }
+            
+            showLoading();
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/scan`);
+                const data = await response.json();
+                
+                currentData = data;
+                renderScanResults(data);
+                
+                alert(`🗡️ Scan complete!\n\nSecurity Score: ${data.score}/100\nGrade: ${data.grade}\n\nFound ${data.stats.vulnerabilities_found} vulnerabilities:\n• Critical: ${data.stats.critical}\n• High: ${data.stats.high}\n• Medium: ${data.stats.medium}`);
+            } catch (error) {
+                alert(`❌ Scan failed:\n${error.message}`);
+                hideLoading();
+            }
+        }
+
+        // Auto-refresh every 30 seconds
+        setInterval(() => {
+            if (!document.hidden) {
+                loadScanResults();
+            }
+        }, 30000);
+    </script>
+</body>
+</html>
