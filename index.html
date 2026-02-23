@@ -3,1232 +3,923 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ShieldClaw — Universal Security for OpenClaw</title>
-    <meta name="description" content="The security layer for every OpenClaw deployment. Works with QuickClaw, Clam, self-hosted, or anywhere you run agents.">
-    
+    <title>ShieldClaw — The Security Standard for AI Agents</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap');
-        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap');
-
         :root {
-            --void: #000000;
-            --void-light: #0a0a0f;
-            --void-lighter: #111118;
-            --primary: #a78bfa;
-            --primary-glow: rgba(167, 139, 250, 0.5);
-            --secondary: #60a5fa;
-            --accent: #f472b6;
-            --white: #ffffff;
-            --text: #e4e4e7;
-            --text-dim: #a1a1aa;
-            --glass: rgba(255, 255, 255, 0.02);
-            --glass-strong: rgba(255, 255, 255, 0.08);
-            --border: rgba(255, 255, 255, 0.08);
-            --glow-purple: rgba(167, 139, 250, 0.15);
-            --glow-blue: rgba(96, 165, 250, 0.15);
+            --black: #000;
+            --white: #fff;
+            --red: #ff2b2b;
+            --red-dim: rgba(255,43,43,0.12);
+            --purple: #9b5de5;
+            --blue: #00b4d8;
+            --green: #06d6a0;
+            --yellow: #ffd60a;
+            --text: #e8e8e8;
+            --dim: #666;
+            --border: rgba(255,255,255,0.07);
+            --panel: rgba(255,255,255,0.03);
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
-        html {
-            scroll-behavior: smooth;
-            overflow-x: hidden;
-        }
+        html { scroll-behavior: smooth; }
 
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: var(--void);
+            font-family: 'Syne', sans-serif;
+            background: var(--black);
             color: var(--text);
             overflow-x: hidden;
-            position: relative;
-            line-height: 1.5;
         }
 
-        /* Background */
-        .void-canvas {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 0;
-            pointer-events: none;
+        /* ── SCAN LINES ── */
+        body::before {
+            content: '';
+            position: fixed; inset: 0; z-index: 0; pointer-events: none;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 2px,
+                rgba(0,0,0,0.03) 2px,
+                rgba(0,0,0,0.03) 4px
+            );
         }
 
-        .mesh-gradient {
-            position: absolute;
-            inset: 0;
-            opacity: 0.4;
-            background: 
-                radial-gradient(circle at 20% 30%, var(--glow-purple) 0%, transparent 50%),
-                radial-gradient(circle at 80% 60%, var(--glow-blue) 0%, transparent 50%),
-                radial-gradient(circle at 40% 80%, rgba(244, 114, 182, 0.1) 0%, transparent 50%);
-            filter: blur(60px);
-            animation: meshShift 20s ease-in-out infinite;
-        }
-
-        @keyframes meshShift {
-            0%, 100% { transform: translate(0, 0) scale(1); }
-            33% { transform: translate(5%, -5%) scale(1.05); }
-            66% { transform: translate(-5%, 5%) scale(0.95); }
-        }
-
+        /* ── GRID OVERLAY ── */
         .grid-overlay {
-            position: absolute;
-            inset: 0;
-            background-image: 
-                linear-gradient(var(--border) 1px, transparent 1px),
-                linear-gradient(90deg, var(--border) 1px, transparent 1px);
-            background-size: 100px 100px;
-            mask-image: radial-gradient(ellipse 80% 50% at 50% 50%, black 0%, transparent 100%);
-            opacity: 0.3;
+            position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0.04;
+            background-image:
+                linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px);
+            background-size: 60px 60px;
         }
 
-        .spotlight {
-            position: absolute;
-            width: 600px;
-            height: 600px;
-            border-radius: 50%;
-            background: radial-gradient(circle, var(--primary-glow) 0%, transparent 70%);
-            filter: blur(80px);
-            pointer-events: none;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        /* Navigation */
+        /* ── NAV ── */
         nav {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 1000;
-            padding: 24px 48px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            backdrop-filter: blur(20px) saturate(180%);
-            background: rgba(0, 0, 0, 0.5);
+            position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+            padding: 20px 48px;
+            display: flex; justify-content: space-between; align-items: center;
             border-bottom: 1px solid var(--border);
-            transition: all 0.3s ease;
-        }
-
-        nav.scrolled {
-            padding: 16px 48px;
-            background: rgba(0, 0, 0, 0.8);
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(12px);
         }
 
         .nav-logo {
-            font-size: 18px;
-            font-weight: 700;
-            letter-spacing: -0.5px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .nav-logo span {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .nav-links {
-            display: flex;
-            gap: 40px;
-            align-items: center;
-        }
-
-        .nav-links a {
-            color: var(--text-dim);
-            text-decoration: none;
-            font-size: 14px;
-            font-weight: 500;
-            letter-spacing: -0.2px;
-            transition: color 0.2s;
-            position: relative;
-        }
-
-        .nav-links a::after {
-            content: '';
-            position: absolute;
-            bottom: -4px;
-            left: 0;
-            width: 0;
-            height: 1px;
-            background: var(--primary);
-            transition: width 0.3s ease;
-        }
-
-        .nav-links a:hover {
+            font-family: 'Space Mono', monospace;
+            font-size: 18px; font-weight: 700;
             color: var(--white);
+            letter-spacing: -0.5px;
+            display: flex; align-items: center; gap: 12px;
         }
 
-        .nav-links a:hover::after {
-            width: 100%;
+        .nav-logo-mark {
+            width: 32px; height: 32px;
+            background: var(--red);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 16px;
+            clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
         }
+
+        .nav-links { display: flex; gap: 40px; align-items: center; }
+        .nav-link { color: var(--dim); font-size: 14px; font-weight: 600; text-decoration: none; transition: color 0.2s; letter-spacing: 0.5px; }
+        .nav-link:hover { color: var(--white); }
 
         .nav-cta {
-            padding: 10px 24px;
-            border-radius: 8px;
-            background: var(--white);
-            color: var(--void);
-            font-weight: 600;
-            font-size: 14px;
-            transition: all 0.3s;
-            border: none;
-            cursor: pointer;
-        }
-
-        .nav-cta:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 12px 24px rgba(255, 255, 255, 0.12);
-        }
-
-        /* Hero */
-        .hero {
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 120px 24px 80px;
-            position: relative;
-            z-index: 1;
-        }
-
-        .hero-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 8px 16px;
-            border-radius: 100px;
-            background: var(--glass);
-            border: 1px solid var(--border);
-            font-size: 13px;
-            font-weight: 500;
-            margin-bottom: 32px;
-            backdrop-filter: blur(20px);
-            animation: fadeInDown 0.6s ease-out;
-        }
-
-        .hero-badge-dot {
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            background: #22c55e;
-            box-shadow: 0 0 8px #22c55e;
-            animation: pulse 2s ease-in-out infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-
-        .hero h1 {
-            font-size: clamp(48px, 8vw, 96px);
-            font-weight: 700;
-            letter-spacing: -0.03em;
-            line-height: 1.05;
-            text-align: center;
-            max-width: 1100px;
-            margin-bottom: 32px;
-            animation: fadeInUp 0.8s ease-out 0.2s backwards;
-        }
-
-        .hero h1 .gradient-text {
-            background: linear-gradient(135deg, 
-                var(--white) 0%, 
-                var(--primary) 40%, 
-                var(--secondary) 70%,
-                var(--white) 100%);
-            background-size: 200% auto;
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            animation: shimmer 8s linear infinite;
-        }
-
-        @keyframes shimmer {
-            0% { background-position: 0% center; }
-            100% { background-position: 200% center; }
-        }
-
-        .hero-description {
-            font-size: clamp(18px, 2vw, 22px);
-            color: var(--text-dim);
-            text-align: center;
-            max-width: 780px;
-            margin: 0 auto 48px;
-            line-height: 1.6;
-            font-weight: 400;
-            letter-spacing: -0.01em;
-            animation: fadeInUp 0.8s ease-out 0.4s backwards;
-        }
-
-        @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(30px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        @keyframes fadeInDown {
-            from { opacity: 0; transform: translateY(-20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .hero-cta {
-            display: flex;
-            gap: 16px;
-            align-items: center;
-            justify-content: center;
-            flex-wrap: wrap;
-            animation: fadeInUp 0.8s ease-out 0.6s backwards;
-        }
-
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 16px 32px;
-            border-radius: 12px;
-            font-weight: 600;
-            font-size: 15px;
-            text-decoration: none;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-            overflow: hidden;
-            letter-spacing: -0.2px;
-        }
-
-        .btn-primary {
-            background: var(--white);
-            color: var(--void);
-            box-shadow: 0 4px 24px rgba(255, 255, 255, 0.15);
-        }
-
-        .btn-primary::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-
-        .btn-primary:hover::before {
-            opacity: 1;
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 12px 48px rgba(255, 255, 255, 0.25);
-            color: var(--white);
-        }
-
-        .btn span {
-            position: relative;
-            z-index: 1;
-        }
-
-        .btn-secondary {
-            background: var(--glass);
-            color: var(--white);
-            border: 1px solid var(--border);
-            backdrop-filter: blur(20px);
-        }
-
-        .btn-secondary:hover {
-            background: var(--glass-strong);
-            border-color: var(--primary);
-            transform: translateY(-2px);
-            box-shadow: 0 12px 48px var(--glow-purple);
-        }
-
-        /* Platform Integrations */
-        .platforms {
-            margin-top: 80px;
-            animation: fadeInUp 0.8s ease-out 0.8s backwards;
-        }
-
-        .platforms-label {
-            text-align: center;
-            font-size: 13px;
+            background: var(--red); color: var(--white);
+            padding: 10px 24px; border-radius: 0;
+            font-family: 'Space Mono', monospace;
+            font-size: 12px; font-weight: 700;
+            text-decoration: none; letter-spacing: 1px;
             text-transform: uppercase;
-            letter-spacing: 2px;
-            color: var(--text-dim);
+            clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
+            transition: all 0.2s;
+        }
+        .nav-cta:hover { background: #ff4444; }
+
+        /* ── HERO ── */
+        .hero {
+            position: relative; z-index: 1;
+            min-height: 100vh;
+            display: flex; align-items: center;
+            padding: 120px 48px 80px;
+            overflow: hidden;
+        }
+
+        .hero-bg {
+            position: absolute; inset: 0; pointer-events: none;
+            background:
+                radial-gradient(ellipse 60% 50% at 70% 50%, rgba(255,43,43,0.08) 0%, transparent 70%),
+                radial-gradient(ellipse 40% 60% at 10% 80%, rgba(155,93,229,0.06) 0%, transparent 60%);
+        }
+
+        /* Animated threat indicator */
+        .threat-ring {
+            position: absolute; right: 8%; top: 50%; transform: translateY(-50%);
+            width: 400px; height: 400px;
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        .ring {
+            position: absolute; border-radius: 50%;
+            border: 1px solid rgba(255,43,43,0.2);
+            animation: expand 3s ease-out infinite;
+        }
+        .ring:nth-child(1) { width: 120px; height: 120px; animation-delay: 0s; }
+        .ring:nth-child(2) { width: 200px; height: 200px; animation-delay: 0.5s; }
+        .ring:nth-child(3) { width: 300px; height: 300px; animation-delay: 1s; }
+        .ring:nth-child(4) { width: 400px; height: 400px; animation-delay: 1.5s; }
+
+        @keyframes expand {
+            0% { opacity: 0.6; transform: scale(0.8); }
+            100% { opacity: 0; transform: scale(1.2); }
+        }
+
+        .threat-center {
+            position: relative; z-index: 1;
+            width: 80px; height: 80px;
+            background: var(--red-dim);
+            border: 2px solid var(--red);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 32px;
+            animation: throb 2s ease-in-out infinite;
+        }
+
+        @keyframes throb {
+            0%,100% { box-shadow: 0 0 0 0 rgba(255,43,43,0.3); }
+            50% { box-shadow: 0 0 0 16px rgba(255,43,43,0); }
+        }
+
+        .hero-content { max-width: 680px; position: relative; z-index: 1; }
+
+        .hero-tag {
+            font-family: 'Space Mono', monospace;
+            font-size: 11px; font-weight: 700;
+            color: var(--red); letter-spacing: 3px;
+            text-transform: uppercase;
+            margin-bottom: 24px;
+            display: flex; align-items: center; gap: 12px;
+        }
+
+        .hero-tag::before {
+            content: '';
+            width: 32px; height: 1px; background: var(--red);
+        }
+
+        h1 {
+            font-size: clamp(52px, 6vw, 88px);
+            font-weight: 800;
+            line-height: 1.0;
+            letter-spacing: -3px;
             margin-bottom: 32px;
-            font-weight: 600;
+            color: var(--white);
         }
 
-        .platforms-grid {
-            display: flex;
-            gap: 24px;
-            justify-content: center;
-            flex-wrap: wrap;
-            max-width: 900px;
-            margin: 0 auto;
+        h1 em {
+            font-style: normal;
+            color: var(--red);
+            -webkit-text-fill-color: transparent;
+            -webkit-text-stroke: 2px var(--red);
         }
 
-        .platform-card {
-            padding: 20px 32px;
-            background: var(--glass);
+        .hero-sub {
+            font-size: 20px;
+            color: var(--dim);
+            line-height: 1.6;
+            margin-bottom: 48px;
+            max-width: 520px;
+            font-weight: 400;
+        }
+
+        .hero-sub strong { color: var(--text); font-weight: 600; }
+
+        .hero-actions { display: flex; gap: 16px; flex-wrap: wrap; }
+
+        .btn-hero {
+            padding: 16px 36px;
+            font-family: 'Space Mono', monospace;
+            font-size: 13px; font-weight: 700;
+            letter-spacing: 1px; text-transform: uppercase;
+            text-decoration: none; cursor: pointer;
+            border: none; transition: all 0.2s;
+            clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+        }
+
+        .btn-hero-primary { background: var(--red); color: var(--white); }
+        .btn-hero-primary:hover { background: #ff4444; transform: translate(-2px,-2px); }
+
+        .btn-hero-secondary {
+            background: transparent; color: var(--text);
             border: 1px solid var(--border);
-            border-radius: 12px;
-            backdrop-filter: blur(20px);
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            transition: all 0.3s;
-            font-size: 15px;
-            font-weight: 500;
+            clip-path: none;
         }
+        .btn-hero-secondary:hover { border-color: rgba(255,255,255,0.3); color: var(--white); }
 
-        .platform-card:hover {
-            border-color: var(--primary);
-            transform: translateY(-2px);
-            box-shadow: 0 12px 32px var(--glow-purple);
-        }
-
-        .platform-icon {
-            font-size: 24px;
-        }
-
-        /* Trust Bar */
-        .trust-bar {
-            margin-top: 100px;
-            padding: 60px 24px;
-            text-align: center;
+        /* ── TICKER ── */
+        .ticker {
+            position: relative; z-index: 1;
             border-top: 1px solid var(--border);
             border-bottom: 1px solid var(--border);
-            background: var(--glass);
-            backdrop-filter: blur(20px);
-        }
-
-        .trust-label {
-            font-size: 13px;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            color: var(--text-dim);
-            margin-bottom: 32px;
-            font-weight: 600;
-        }
-
-        .trust-logos {
-            display: flex;
-            gap: 60px;
-            align-items: center;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
-
-        .trust-stat {
-            text-align: center;
-        }
-
-        .trust-number {
-            font-size: 48px;
-            font-weight: 800;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            line-height: 1;
-            margin-bottom: 8px;
-        }
-
-        .trust-desc {
-            font-size: 14px;
-            color: var(--text-dim);
-        }
-
-        /* Container */
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 0 24px;
-        }
-
-        section {
-            padding: 160px 24px;
-            position: relative;
-        }
-
-        /* Section Headers */
-        .section-header {
-            max-width: 800px;
-            margin: 0 auto 80px;
-            text-align: center;
-        }
-
-        .section-label {
-            font-size: 14px;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            color: var(--primary);
-            margin-bottom: 16px;
-            font-weight: 600;
-        }
-
-        .section-title {
-            font-size: clamp(36px, 5vw, 64px);
-            font-weight: 700;
-            letter-spacing: -0.02em;
-            line-height: 1.1;
-            margin-bottom: 24px;
-        }
-
-        .section-desc {
-            font-size: 20px;
-            color: var(--text-dim);
-            line-height: 1.6;
-        }
-
-        /* Features Grid */
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
-            gap: 32px;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .feature-card {
-            padding: 40px;
-            background: var(--glass);
-            border: 1px solid var(--border);
-            border-radius: 24px;
-            backdrop-filter: blur(20px);
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .feature-card:hover {
-            transform: translateY(-4px);
-            border-color: var(--primary);
-            box-shadow: 0 24px 72px var(--glow-purple);
-        }
-
-        .feature-icon {
-            font-size: 48px;
-            margin-bottom: 24px;
-            display: block;
-        }
-
-        .feature-title {
-            font-size: 24px;
-            font-weight: 700;
-            margin-bottom: 12px;
-            letter-spacing: -0.01em;
-        }
-
-        .feature-desc {
-            color: var(--text-dim);
-            line-height: 1.7;
-            font-size: 16px;
-        }
-
-        /* Pricing */
-        .pricing-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
-            gap: 32px;
-            margin-top: 80px;
-            max-width: 1200px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-
-        .pricing-card {
-            background: var(--glass);
-            border: 1px solid var(--border);
-            border-radius: 24px;
-            padding: 48px;
-            backdrop-filter: blur(20px);
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
+            padding: 16px 0;
             overflow: hidden;
+            background: rgba(255,43,43,0.03);
         }
 
-        .pricing-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 3px;
-            background: linear-gradient(90deg, var(--primary), var(--secondary));
-            opacity: 0;
-            transition: opacity 0.4s;
+        .ticker-inner {
+            display: flex; gap: 80px;
+            animation: ticker 30s linear infinite;
+            white-space: nowrap;
         }
 
-        .pricing-card:hover::before {
-            opacity: 1;
-        }
-
-        .pricing-card:hover {
-            transform: translateY(-8px);
-            border-color: var(--primary);
-            box-shadow: 0 32px 96px var(--glow-purple);
-        }
-
-        .pricing-card.featured {
-            border-color: var(--primary);
-            box-shadow: 0 24px 72px var(--glow-purple);
-        }
-
-        .pricing-card.featured::before {
-            opacity: 1;
-        }
-
-        .pricing-label {
-            font-size: 13px;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            color: var(--primary);
-            font-weight: 600;
-            margin-bottom: 16px;
-        }
-
-        .pricing-name {
-            font-size: 32px;
-            font-weight: 700;
-            margin-bottom: 12px;
-            letter-spacing: -0.02em;
-        }
-
-        .pricing-desc {
-            color: var(--text-dim);
-            margin-bottom: 32px;
-            line-height: 1.6;
-        }
-
-        .pricing-price {
-            display: flex;
-            align-items: baseline;
-            gap: 8px;
-            margin-bottom: 8px;
-        }
-
-        .pricing-amount {
-            font-size: 64px;
-            font-weight: 800;
-            letter-spacing: -0.03em;
-            line-height: 1;
-        }
-
-        .pricing-period {
-            font-size: 18px;
-            color: var(--text-dim);
-        }
-
-        .pricing-note {
-            color: var(--text-dim);
-            font-size: 14px;
-            margin-bottom: 32px;
-        }
-
-        .pricing-features {
-            list-style: none;
-            margin-bottom: 32px;
-        }
-
-        .pricing-features li {
-            padding: 12px 0;
-            display: flex;
-            align-items: start;
-            gap: 12px;
-            font-size: 15px;
-            line-height: 1.6;
-        }
-
-        .pricing-features li::before {
-            content: "✓";
-            color: var(--primary);
-            font-weight: 700;
-            font-size: 18px;
+        .ticker-item {
+            font-family: 'Space Mono', monospace;
+            font-size: 12px; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 2px;
+            color: var(--dim);
+            display: flex; align-items: center; gap: 16px;
             flex-shrink: 0;
         }
 
-        .pricing-features li.disabled {
-            opacity: 0.3;
+        .ticker-dot { width: 6px; height: 6px; background: var(--red); border-radius: 50%; flex-shrink: 0; }
+
+        @keyframes ticker {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
         }
 
-        .pricing-features li.disabled::before {
-            content: "—";
+        /* ── SECTIONS ── */
+        section { position: relative; z-index: 1; padding: 100px 48px; }
+
+        .section-tag {
+            font-family: 'Space Mono', monospace;
+            font-size: 11px; font-weight: 700;
+            color: var(--red); letter-spacing: 3px;
+            text-transform: uppercase; margin-bottom: 20px;
         }
 
-        .pricing-btn {
-            width: 100%;
-            padding: 16px;
-            border-radius: 12px;
-            font-weight: 600;
-            font-size: 15px;
-            text-align: center;
-            text-decoration: none;
-            display: block;
-            transition: all 0.3s;
+        .section-title {
+            font-size: clamp(36px, 4vw, 56px);
+            font-weight: 800; letter-spacing: -2px;
+            line-height: 1.1; margin-bottom: 16px;
+        }
+
+        .section-sub {
+            font-size: 18px; color: var(--dim); max-width: 560px;
+            line-height: 1.6; margin-bottom: 64px;
+        }
+
+        /* ── PRODUCTS ── */
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1px;
+            background: var(--border);
             border: 1px solid var(--border);
-            background: var(--glass);
-            color: var(--white);
         }
 
-        .pricing-card.featured .pricing-btn {
-            background: var(--white);
-            color: var(--void);
-            border: none;
+        .product-card {
+            background: var(--black);
+            padding: 48px 40px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s;
         }
 
-        .pricing-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 12px 32px rgba(255, 255, 255, 0.12);
+        .product-card:hover {
+            background: var(--panel);
         }
 
-        /* Final CTA */
-        .final-cta {
-            padding: 200px 24px;
+        .product-card::before {
+            content: '';
+            position: absolute; top: 0; left: 0;
+            width: 100%; height: 2px;
+            background: var(--accent-color, var(--red));
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.3s;
+        }
+
+        .product-card:hover::before { transform: scaleX(1); }
+
+        .product-num {
+            font-family: 'Space Mono', monospace;
+            font-size: 11px; color: var(--dim);
+            letter-spacing: 2px; margin-bottom: 24px;
+        }
+
+        .product-icon { font-size: 40px; margin-bottom: 20px; display: block; }
+
+        .product-name {
+            font-size: 22px; font-weight: 800;
+            margin-bottom: 8px; letter-spacing: -0.5px;
+        }
+
+        .product-tier {
+            font-family: 'Space Mono', monospace;
+            font-size: 10px; font-weight: 700;
+            padding: 3px 10px; border-radius: 0;
+            text-transform: uppercase; letter-spacing: 1px;
+            margin-bottom: 20px; display: inline-block;
+        }
+
+        .product-desc { font-size: 15px; color: var(--dim); line-height: 1.6; margin-bottom: 32px; }
+
+        .product-price {
+            font-family: 'Space Mono', monospace;
+            font-size: 24px; font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .product-price-sub { font-size: 12px; color: var(--dim); }
+
+        .product-features { margin-top: 24px; }
+        .product-feature {
+            font-size: 13px; color: var(--dim);
+            padding: 8px 0; border-top: 1px solid var(--border);
+            display: flex; align-items: center; gap: 10px;
+        }
+        .product-feature::before { content: '→'; color: var(--accent-color, var(--red)); font-family: 'Space Mono', monospace; }
+
+        /* Wide cards */
+        .product-card.wide { grid-column: span 2; }
+        .product-card.new::after {
+            content: 'NEW';
+            position: absolute; top: 20px; right: 20px;
+            font-family: 'Space Mono', monospace;
+            font-size: 10px; font-weight: 700;
+            background: var(--red); color: white;
+            padding: 4px 8px; letter-spacing: 2px;
+        }
+
+        /* ── ARCHITECTURE ── */
+        .arch-diagram {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            padding: 48px;
+            margin: 48px 0;
+            position: relative;
+        }
+
+        .arch-flow {
+            display: flex; align-items: center;
+            gap: 0; flex-wrap: wrap;
+        }
+
+        .arch-node {
+            flex: 1; min-width: 140px;
+            padding: 24px 20px;
             text-align: center;
             position: relative;
         }
 
-        .final-cta::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: radial-gradient(circle at center, var(--glow-purple) 0%, transparent 60%);
-            pointer-events: none;
+        .arch-node-icon { font-size: 28px; margin-bottom: 12px; display: block; }
+        .arch-node-label { font-size: 13px; font-weight: 700; margin-bottom: 6px; }
+        .arch-node-sub { font-size: 11px; color: var(--dim); font-family: 'Space Mono', monospace; }
+
+        .arch-arrow {
+            color: var(--red); font-family: 'Space Mono', monospace;
+            font-size: 20px; padding: 0 8px;
+            opacity: 0.5;
         }
 
-        .final-cta h2 {
-            font-size: clamp(40px, 6vw, 72px);
-            font-weight: 700;
-            letter-spacing: -0.02em;
-            line-height: 1.1;
-            margin-bottom: 32px;
-            max-width: 900px;
-            margin-left: auto;
-            margin-right: auto;
+        .arch-shield {
+            border: 2px solid var(--red);
+            background: var(--red-dim);
         }
 
-        .final-cta p {
-            font-size: 20px;
-            color: var(--text-dim);
-            margin-bottom: 48px;
-            max-width: 600px;
-            margin-left: auto;
-            margin-right: auto;
+        /* ── THREAT FEED ── */
+        .threat-feed {
+            border: 1px solid var(--border);
+            background: var(--panel);
         }
 
-        /* Footer */
-        footer {
-            padding: 80px 24px 40px;
-            border-top: 1px solid var(--border);
+        .threat-feed-header {
+            padding: 20px 28px;
+            border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; gap: 12px;
         }
 
-        .footer-content {
-            max-width: 1400px;
-            margin: 0 auto;
+        .live-dot {
+            width: 8px; height: 8px; background: var(--red);
+            border-radius: 50%;
+            animation: blink 1s ease-in-out infinite;
+        }
+
+        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+
+        .feed-row {
+            padding: 16px 28px;
+            border-bottom: 1px solid var(--border);
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 60px;
-            margin-bottom: 60px;
+            grid-template-columns: 80px 1fr 120px 80px;
+            gap: 20px; align-items: center;
+            font-family: 'Space Mono', monospace;
+            font-size: 12px;
+            animation: fadeIn 0.3s ease;
         }
 
-        .footer-section h4 {
-            font-size: 14px;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            margin-bottom: 20px;
-            color: var(--text);
-        }
+        @keyframes fadeIn { from { opacity: 0; background: rgba(255,43,43,0.05); } to { opacity: 1; } }
 
-        .footer-section ul {
-            list-style: none;
-        }
+        .feed-time { color: var(--dim); }
+        .feed-agent { color: var(--text); }
+        .feed-action { color: var(--dim); }
+        .feed-status { text-align: right; }
+        .status-blocked { color: var(--red); font-weight: 700; }
+        .status-allowed { color: var(--green); font-weight: 700; }
 
-        .footer-section li {
-            margin-bottom: 12px;
-        }
-
-        .footer-section a {
-            color: var(--text-dim);
-            text-decoration: none;
-            font-size: 14px;
-            transition: color 0.2s;
-        }
-
-        .footer-section a:hover {
-            color: var(--white);
-        }
-
-        .footer-bottom {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding-top: 40px;
-            border-top: 1px solid var(--border);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 20px;
-        }
-
-        .footer-bottom p {
-            color: var(--text-dim);
-            font-size: 14px;
-        }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            nav {
-                padding: 16px 24px;
-            }
-            
-            .nav-links {
-                display: none;
-            }
-
-            .platforms-grid {
-                flex-direction: column;
-                align-items: stretch;
-            }
-
-            .features-grid,
-            .pricing-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .footer-content {
-                grid-template-columns: 1fr;
-                gap: 40px;
-            }
-
-            .footer-bottom {
-                flex-direction: column;
-                text-align: center;
-            }
-        }
-
-        /* Scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: var(--void);
-        }
-
-        ::-webkit-scrollbar-thumb {
+        /* ── PRICING ── */
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1px;
             background: var(--border);
-            border-radius: 4px;
+            border: 1px solid var(--border);
         }
 
-        ::-webkit-scrollbar-thumb:hover {
-            background: var(--primary);
+        .price-card {
+            background: var(--black);
+            padding: 48px 32px;
+            position: relative;
+            transition: background 0.3s;
         }
 
-        ::selection {
-            background: var(--primary);
+        .price-card:hover { background: var(--panel); }
+        .price-card.featured { background: rgba(255,43,43,0.05); }
+
+        .price-card.featured::before {
+            content: 'MOST POPULAR';
+            position: absolute; top: -1px; left: 0; right: 0;
+            text-align: center; padding: 6px;
+            background: var(--red);
+            font-family: 'Space Mono', monospace;
+            font-size: 10px; font-weight: 700;
+            letter-spacing: 2px; color: white;
+        }
+
+        .price-name { font-size: 14px; font-weight: 700; margin-bottom: 8px; letter-spacing: 1px; text-transform: uppercase; color: var(--dim); }
+        .price-amount { font-family: 'Space Mono', monospace; font-size: 48px; font-weight: 700; line-height: 1; margin-bottom: 4px; }
+        .price-period { font-size: 13px; color: var(--dim); margin-bottom: 32px; font-family: 'Space Mono', monospace; }
+
+        .price-features { margin-bottom: 40px; }
+        .price-feature {
+            font-size: 14px; color: var(--dim); padding: 10px 0;
+            border-bottom: 1px solid var(--border);
+            display: flex; gap: 12px; align-items: flex-start;
+        }
+        .price-feature-check { color: var(--green); flex-shrink: 0; font-weight: 700; }
+        .price-feature-x { color: var(--dim); flex-shrink: 0; }
+
+        .price-btn {
+            display: block; width: 100%;
+            padding: 14px; text-align: center;
+            font-family: 'Space Mono', monospace;
+            font-size: 12px; font-weight: 700;
+            letter-spacing: 1px; text-transform: uppercase;
+            text-decoration: none; cursor: pointer; border: none;
+            transition: all 0.2s;
+        }
+
+        .price-btn-primary { background: var(--red); color: white; }
+        .price-btn-primary:hover { background: #ff4444; }
+        .price-btn-secondary { background: transparent; color: var(--text); border: 1px solid var(--border); }
+        .price-btn-secondary:hover { border-color: rgba(255,255,255,0.3); }
+
+        /* ── QUOTE ── */
+        .quote-section {
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+            padding: 80px 48px;
+            text-align: center;
+            background: rgba(255,43,43,0.02);
+        }
+
+        blockquote {
+            font-size: clamp(24px, 3vw, 40px);
+            font-weight: 700; letter-spacing: -1px;
+            line-height: 1.3; max-width: 800px; margin: 0 auto;
             color: var(--white);
+        }
+
+        blockquote em { color: var(--red); font-style: normal; }
+        blockquote cite { display: block; font-size: 14px; color: var(--dim); font-weight: 400; margin-top: 24px; font-style: normal; font-family: 'Space Mono', monospace; letter-spacing: 1px; }
+
+        /* ── CTA ── */
+        .cta-section {
+            padding: 120px 48px;
+            text-align: center;
+            position: relative; overflow: hidden;
+        }
+
+        .cta-section::before {
+            content: 'SHIELDCLAW';
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: clamp(80px, 15vw, 200px);
+            font-weight: 800; letter-spacing: -8px;
+            color: transparent;
+            -webkit-text-stroke: 1px rgba(255,255,255,0.04);
+            white-space: nowrap; pointer-events: none;
+        }
+
+        .cta-title { font-size: clamp(40px, 5vw, 72px); font-weight: 800; letter-spacing: -3px; margin-bottom: 24px; position: relative; }
+        .cta-sub { font-size: 18px; color: var(--dim); margin-bottom: 48px; position: relative; }
+        .cta-actions { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; position: relative; }
+
+        /* ── FOOTER ── */
+        footer {
+            border-top: 1px solid var(--border);
+            padding: 40px 48px;
+            display: flex; justify-content: space-between; align-items: center;
+            font-family: 'Space Mono', monospace;
+            font-size: 12px; color: var(--dim);
+        }
+
+        footer a { color: var(--dim); text-decoration: none; }
+        footer a:hover { color: var(--text); }
+
+        @media (max-width: 768px) {
+            nav { padding: 16px 24px; }
+            .nav-links { display: none; }
+            .hero { padding: 100px 24px 60px; }
+            .threat-ring { display: none; }
+            section { padding: 60px 24px; }
+            .products-grid { grid-template-columns: 1fr; }
+            .product-card.wide { grid-column: span 1; }
+            .pricing-grid { grid-template-columns: 1fr 1fr; }
+            .arch-flow { flex-direction: column; }
+            footer { flex-direction: column; gap: 16px; text-align: center; }
         }
     </style>
 </head>
 <body>
-    <!-- Background -->
-    <div class="void-canvas">
-        <div class="mesh-gradient"></div>
-        <div class="grid-overlay"></div>
-        <div class="spotlight" id="spotlight"></div>
-    </div>
+    <div class="grid-overlay"></div>
 
     <!-- Nav -->
-    <nav id="nav">
+    <nav>
         <div class="nav-logo">
-            <span>⬡</span>
-            <span>ShieldClaw</span>
+            <div class="nav-logo-mark">🗡️</div>
+            SHIELDCLAW
         </div>
         <div class="nav-links">
-            <a href="#features">Features</a>
-            <a href="#pricing">Pricing</a>
-            <a href="https://github.com/colepresley000-hub/openclaw-secure">Docs</a>
-            <button class="nav-cta">Start Free</button>
+            <a href="#products" class="nav-link">Products</a>
+            <a href="#architecture" class="nav-link">How It Works</a>
+            <a href="#pricing" class="nav-link">Pricing</a>
+            <a href="https://github.com/colepresley000-hub/openclaw-secure" class="nav-link">GitHub ↗</a>
         </div>
+        <a href="https://shieldclaw.xyz/hunt" class="nav-cta">Launch Dashboard →</a>
     </nav>
 
     <!-- Hero -->
-    <section class="hero">
-        <div class="hero-badge">
-            <span class="hero-badge-dot"></span>
-            <span>Universal security layer • Works everywhere</span>
+    <div class="hero">
+        <div class="hero-bg"></div>
+
+        <div class="threat-ring">
+            <div class="ring"></div>
+            <div class="ring"></div>
+            <div class="ring"></div>
+            <div class="ring"></div>
+            <div class="threat-center">🛡️</div>
         </div>
 
-        <h1>
-            <span class="gradient-text">One security layer.</span><br>
-            Every OpenClaw deployment.
-        </h1>
+        <div class="hero-content">
+            <div class="hero-tag">AI Agent Security Infrastructure</div>
 
-        <p class="hero-description">
-            Whether you run on QuickClaw, Clam, self-hosted, or anywhere else—ShieldClaw protects your agents. 
-            Real-time threat detection. Zero configuration conflicts. Universal compatibility.
-        </p>
+            <h1>Every agent.<br><em>Secured.</em></h1>
 
-        <div class="hero-cta">
-            <a href="https://github.com/colepresley000-hub/openclaw-secure" class="btn btn-primary">
-                <span>Get started free</span>
-                <span>→</span>
-            </a>
-            <a href="#pricing" class="btn btn-secondary">
-                <span>View pricing</span>
-            </a>
-        </div>
+            <p class="hero-sub">
+                ShieldClaw is the <strong>independent governance layer</strong> for AI agents.
+                We don't build agents. We make every agent — Claude, GPT, Kimi, OpenClaw —
+                <strong>safe to deploy in production.</strong>
+            </p>
 
-        <!-- Platform Integrations -->
-        <div class="platforms">
-            <div class="platforms-label">Works with all OpenClaw platforms</div>
-            <div class="platforms-grid">
-                <div class="platform-card">
-                    <span class="platform-icon">📱</span>
-                    <span>QuickClaw</span>
-                </div>
-                <div class="platform-card">
-                    <span class="platform-icon">☁️</span>
-                    <span>Clam</span>
-                </div>
-                <div class="platform-card">
-                    <span class="platform-icon">⚙️</span>
-                    <span>Self-hosted</span>
-                </div>
-                <div class="platform-card">
-                    <span class="platform-icon">🐳</span>
-                    <span>Docker</span>
-                </div>
-                <div class="platform-card">
-                    <span class="platform-icon">☸️</span>
-                    <span>Kubernetes</span>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Trust Bar -->
-    <div class="trust-bar">
-        <div class="trust-label">Trusted across the OpenClaw ecosystem</div>
-        <div class="trust-logos">
-            <div class="trust-stat">
-                <div class="trust-number">40+</div>
-                <div class="trust-desc">Attack vectors blocked</div>
-            </div>
-            <div class="trust-stat">
-                <div class="trust-number">0ms</div>
-                <div class="trust-desc">Performance overhead</div>
-            </div>
-            <div class="trust-stat">
-                <div class="trust-number">99.99%</div>
-                <div class="trust-desc">Uptime SLA</div>
-            </div>
-            <div class="trust-stat">
-                <div class="trust-number">24/7</div>
-                <div class="trust-desc">Active monitoring</div>
+            <div class="hero-actions">
+                <a href="https://shieldclaw.xyz/hunt" class="btn-hero btn-hero-primary">Start Free Trial →</a>
+                <a href="https://github.com/colepresley000-hub/openclaw-secure" class="btn-hero btn-hero-secondary">★ 1,000+ on GitHub</a>
             </div>
         </div>
     </div>
 
-    <!-- Features -->
-    <section id="features">
-        <div class="container">
-            <div class="section-header">
-                <div class="section-label">PLATFORM AGNOSTIC</div>
-                <h2 class="section-title">Security that adapts to you</h2>
-                <p class="section-desc">
-                    Drop ShieldClaw into any OpenClaw deployment. No rewrites, no migrations, no compromises.
-                </p>
+    <!-- Ticker -->
+    <div class="ticker">
+        <div class="ticker-inner">
+            <span class="ticker-item"><span class="ticker-dot"></span>PROMPT INJECTION BLOCKED</span>
+            <span class="ticker-item"><span class="ticker-dot"></span>CREDENTIAL EXFIL STOPPED</span>
+            <span class="ticker-item"><span class="ticker-dot"></span>UNVERIFIED SKILL QUARANTINED</span>
+            <span class="ticker-item"><span class="ticker-dot"></span>GATEWAY AUTH ENFORCED</span>
+            <span class="ticker-item"><span class="ticker-dot"></span>SOC2 AUDIT TRAIL GENERATED</span>
+            <span class="ticker-item"><span class="ticker-dot"></span>SHELL ACCESS DENIED</span>
+            <span class="ticker-item"><span class="ticker-dot"></span>EPHEMERAL RUNTIME NUKED</span>
+            <span class="ticker-item"><span class="ticker-dot"></span>MEMORY SANDBOXED</span>
+            <!-- Duplicate for infinite scroll -->
+            <span class="ticker-item"><span class="ticker-dot"></span>PROMPT INJECTION BLOCKED</span>
+            <span class="ticker-item"><span class="ticker-dot"></span>CREDENTIAL EXFIL STOPPED</span>
+            <span class="ticker-item"><span class="ticker-dot"></span>UNVERIFIED SKILL QUARANTINED</span>
+            <span class="ticker-item"><span class="ticker-dot"></span>GATEWAY AUTH ENFORCED</span>
+            <span class="ticker-item"><span class="ticker-dot"></span>SOC2 AUDIT TRAIL GENERATED</span>
+            <span class="ticker-item"><span class="ticker-dot"></span>SHELL ACCESS DENIED</span>
+            <span class="ticker-item"><span class="ticker-dot"></span>EPHEMERAL RUNTIME NUKED</span>
+            <span class="ticker-item"><span class="ticker-dot"></span>MEMORY SANDBOXED</span>
+        </div>
+    </div>
+
+    <!-- Products -->
+    <section id="products">
+        <div class="section-tag">// Products</div>
+        <div class="section-title">Five layers.<br>One shield.</div>
+        <p class="section-sub">From real-time monitoring to universal agent governance. Pick the layer you need, or deploy the full stack.</p>
+
+        <div class="products-grid">
+            <!-- Monitor -->
+            <div class="product-card" style="--accent-color: #06d6a0;">
+                <div class="product-num">01 / 05</div>
+                <span class="product-icon">📡</span>
+                <div class="product-name">Monitor</div>
+                <div class="product-tier" style="background: rgba(6,214,160,0.1); color: #06d6a0; border: 1px solid rgba(6,214,160,0.2);">Defense</div>
+                <p class="product-desc">Real-time monitoring and alerts for your OpenClaw deployment. Know the instant something goes wrong.</p>
+                <div class="product-price">$79<span style="font-size:16px">/mo</span></div>
+                <div class="product-price-sub">Up to 3 deployments</div>
+                <div class="product-features">
+                    <div class="product-feature" style="--accent-color: #06d6a0;">Real-time breach alerts</div>
+                    <div class="product-feature" style="--accent-color: #06d6a0;">Security dashboard</div>
+                    <div class="product-feature" style="--accent-color: #06d6a0;">Compliance reports</div>
+                </div>
             </div>
 
-            <div class="features-grid">
-                <div class="feature-card">
-                    <span class="feature-icon">🔌</span>
-                    <h3 class="feature-title">Universal integration</h3>
-                    <p class="feature-desc">Works with QuickClaw, Clam, self-hosted, Docker, Kubernetes—anywhere you run OpenClaw. One config, infinite platforms.</p>
+            <!-- Hunt -->
+            <div class="product-card" style="--accent-color: #ff2b2b;">
+                <div class="product-num">02 / 05</div>
+                <span class="product-icon">⚔️</span>
+                <div class="product-name">Hunt</div>
+                <div class="product-tier" style="background: rgba(255,43,43,0.1); color: #ff2b2b; border: 1px solid rgba(255,43,43,0.2);">Defense + Offense</div>
+                <p class="product-desc">Weekly pentesting of your OpenClaw deployment. 50+ attack scenarios. AI-generated fixes.</p>
+                <div class="product-price">$199<span style="font-size:16px">/mo</span></div>
+                <div class="product-price-sub">Launch special: $99/mo</div>
+                <div class="product-features">
+                    <div class="product-feature">50+ attack scenarios</div>
+                    <div class="product-feature">AI-generated fixes</div>
+                    <div class="product-feature">1-click remediation</div>
                 </div>
+            </div>
 
-                <div class="feature-card">
-                    <span class="feature-icon">⚡</span>
-                    <h3 class="feature-title">Real-time protection</h3>
-                    <p class="feature-desc">ML-powered threat detection that learns your patterns. Blocks 40+ attack vectors before they execute. Sub-millisecond response.</p>
+            <!-- Firewall - NEW -->
+            <div class="product-card new" style="--accent-color: #ffd60a;">
+                <div class="product-num">03 / 05</div>
+                <span class="product-icon">🛡️</span>
+                <div class="product-name">Firewall</div>
+                <div class="product-tier" style="background: rgba(255,214,10,0.1); color: #ffd60a; border: 1px solid rgba(255,214,10,0.2);">Real-time Blocking</div>
+                <p class="product-desc">Sits as a proxy between your agents and tools. Every request inspected. Attacks blocked in &lt;2ms.</p>
+                <div class="product-price">$299<span style="font-size:16px">/mo</span></div>
+                <div class="product-price-sub">Unlimited inspections</div>
+                <div class="product-features">
+                    <div class="product-feature">Intent analysis engine</div>
+                    <div class="product-feature">Prompt injection blocking</div>
+                    <div class="product-feature">Custom rules engine</div>
                 </div>
+            </div>
 
-                <div class="feature-card">
-                    <span class="feature-icon">🎯</span>
-                    <h3 class="feature-title">Zero conflicts</h3>
-                    <p class="feature-desc">Designed to coexist. Doesn't interfere with platform features, plugins, or integrations. Just pure protection.</p>
+            <!-- Frontier Translation - NEW, wide -->
+            <div class="product-card wide new" style="--accent-color: #00b4d8;">
+                <div class="product-num">04 / 05</div>
+                <span class="product-icon">🗂️</span>
+                <div class="product-name">Frontier Translation</div>
+                <div class="product-tier" style="background: rgba(0,180,216,0.1); color: #00b4d8; border: 1px solid rgba(0,180,216,0.2);">Compliance Bridge</div>
+                <p class="product-desc">Converts OpenClaw event logs into enterprise-grade audit trails. Supports SOC2, HIPAA, GDPR, ISO27001. Gives OpenClaw a Corporate Passport your CISO will actually approve.</p>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin-top: 24px;">
+                    <div>
+                        <div class="product-price">$399<span style="font-size:16px">/mo</span></div>
+                        <div class="product-price-sub">Per deployment</div>
+                    </div>
+                    <div class="product-features" style="margin: 0;">
+                        <div class="product-feature">SOC2 / HIPAA / GDPR / ISO27001</div>
+                        <div class="product-feature">Immutable audit trails</div>
+                        <div class="product-feature">PDF compliance reports</div>
+                    </div>
                 </div>
+            </div>
 
-                <div class="feature-card">
-                    <span class="feature-icon">🔍</span>
-                    <h3 class="feature-title">Drift detection</h3>
-                    <p class="feature-desc">SHA-256 verification on every config change. Instant alerts when something's off. Works across all platforms.</p>
-                </div>
-
-                <div class="feature-card">
-                    <span class="feature-icon">🚨</span>
-                    <h3 class="feature-title">Smart alerting</h3>
-                    <p class="feature-desc">Multi-channel notifications routed by severity. Email, Slack, Discord, SMS—your choice, your rules.</p>
-                </div>
-
-                <div class="feature-card">
-                    <span class="feature-icon">📊</span>
-                    <h3 class="feature-title">Unified dashboard</h3>
-                    <p class="feature-desc">Monitor all your deployments in one place. QuickClaw on mobile, Clam in cloud, self-hosted on-prem—see everything.</p>
+            <!-- Shield-MCP - NEW, full width -->
+            <div class="product-card new" style="--accent-color: #9b5de5; border-top: 2px solid #9b5de5; grid-column: span 3; background: rgba(155,93,229,0.03);">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center;">
+                    <div>
+                        <div class="product-num">05 / 05 — THE INFRASTRUCTURE PLAY</div>
+                        <span class="product-icon">🔐</span>
+                        <div class="product-name" style="font-size: 32px;">Shield-MCP</div>
+                        <div class="product-tier" style="background: rgba(155,93,229,0.1); color: #9b5de5; border: 1px solid rgba(155,93,229,0.2);">Universal Permission Layer</div>
+                        <p class="product-desc" style="font-size: 17px;">Every AI agent — Claude, GPT, Kimi, or any model — must connect to Shield-MCP before accessing any tool, database, or system. We don't ask models to be safe. We technically restrict what they can physically do.</p>
+                        <div class="product-price" style="color: #9b5de5;">$499<span style="font-size:16px; color: var(--dim);">/mo starter</span></div>
+                        <div class="product-price-sub">Up to 5 agents • $1,499/mo unlimited</div>
+                    </div>
+                    <div>
+                        <div style="background: rgba(0,0,0,0.5); border: 1px solid rgba(155,93,229,0.2); padding: 28px; font-family: 'Space Mono', monospace; font-size: 12px; line-height: 2; color: var(--dim);">
+                            <span style="color: #9b5de5;">// Claude wants Slack</span><br>
+                            Claude → Shield-MCP → ✅ GRANTED<br><br>
+                            <span style="color: #9b5de5;">// GPT wants database delete</span><br>
+                            GPT → Shield-MCP → 🚫 DENIED<br><br>
+                            <span style="color: #9b5de5;">// Kimi wants shell access</span><br>
+                            Kimi → Shield-MCP → ⚠️ REQUIRES APPROVAL<br><br>
+                            <span style="color: #9b5de5;">// Any agent, any model</span><br>
+                            * → Shield-MCP → Permission check
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </section>
+
+    <!-- Architecture -->
+    <section id="architecture">
+        <div class="section-tag">// Architecture</div>
+        <div class="section-title">How it works.</div>
+
+        <div class="arch-diagram">
+            <div class="arch-flow">
+                <div class="arch-node">
+                    <span class="arch-node-icon">🤖</span>
+                    <div class="arch-node-label">Your Agent</div>
+                    <div class="arch-node-sub">Claude / GPT<br>Kimi / OpenClaw</div>
+                </div>
+                <div class="arch-arrow">→</div>
+                <div class="arch-node arch-shield">
+                    <span class="arch-node-icon">🔐</span>
+                    <div class="arch-node-label">Shield-MCP</div>
+                    <div class="arch-node-sub">Permission check<br>&lt;2ms latency</div>
+                </div>
+                <div class="arch-arrow">→</div>
+                <div class="arch-node">
+                    <span class="arch-node-icon">🛡️</span>
+                    <div class="arch-node-label">Firewall</div>
+                    <div class="arch-node-sub">Intent analysis<br>Real-time block</div>
+                </div>
+                <div class="arch-arrow">→</div>
+                <div class="arch-node">
+                    <span class="arch-node-icon">🔧</span>
+                    <div class="arch-node-label">Your Tools</div>
+                    <div class="arch-node-sub">Slack / DB<br>Files / APIs</div>
+                </div>
+            </div>
+
+            <div style="margin-top: 32px; padding-top: 32px; border-top: 1px solid var(--border); display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px;">
+                <div>
+                    <div style="font-family: 'Space Mono', monospace; font-size: 10px; color: var(--dim); letter-spacing: 2px; margin-bottom: 8px;">MONITOR + HUNT</div>
+                    <div style="font-size: 14px; color: var(--text);">Weekly pentesting + real-time alerts. For OpenClaw deployments.</div>
+                </div>
+                <div>
+                    <div style="font-family: 'Space Mono', monospace; font-size: 10px; color: var(--dim); letter-spacing: 2px; margin-bottom: 8px;">FIREWALL</div>
+                    <div style="font-size: 14px; color: var(--text);">Every agent request inspected before execution. Attacks stopped cold.</div>
+                </div>
+                <div>
+                    <div style="font-family: 'Space Mono', monospace; font-size: 10px; color: var(--dim); letter-spacing: 2px; margin-bottom: 8px;">FRONTIER TRANSLATION</div>
+                    <div style="font-size: 14px; color: var(--text);">OpenClaw logs → SOC2/HIPAA/GDPR audit trails. Your CISO will thank you.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Live threat feed simulation -->
+        <div class="threat-feed">
+            <div class="threat-feed-header">
+                <div class="live-dot"></div>
+                <span style="font-family: 'Space Mono', monospace; font-size: 12px; font-weight: 700; letter-spacing: 1px;">LIVE THREAT FEED</span>
+                <span style="font-size: 12px; color: var(--dim); margin-left: auto; font-family: 'Space Mono', monospace;">Intercepting requests in real-time</span>
+            </div>
+            <div style="padding: 12px 28px; border-bottom: 1px solid var(--border); display: grid; grid-template-columns: 80px 1fr 200px 80px; gap: 20px; font-family: 'Space Mono', monospace; font-size: 10px; color: var(--dim); letter-spacing: 1px;">
+                <span>TIME</span><span>AGENT</span><span>ACTION</span><span style="text-align:right">STATUS</span>
+            </div>
+            <div id="liveFeed"></div>
+        </div>
+    </section>
+
+    <!-- Quote -->
+    <div class="quote-section">
+        <blockquote>
+            "Would you let the same company that builds the engine also be the only one who inspects the brakes?"
+            <cite>— The case for independent AI governance</cite>
+        </blockquote>
+    </div>
 
     <!-- Pricing -->
     <section id="pricing">
-        <div class="container">
-            <div class="section-header">
-                <div class="section-label">PRICING</div>
-                <h2 class="section-title">One price. All platforms.</h2>
-                <p class="section-desc">
-                    Same protection whether you're on QuickClaw, Clam, or self-hosted. No per-platform fees.
-                </p>
+        <div class="section-tag">// Pricing</div>
+        <div class="section-title">Start protecting.<br>Scale as you grow.</div>
+        <p class="section-sub">Every plan includes a 14-day free trial. No credit card required.</p>
+
+        <div class="pricing-grid">
+            <div class="price-card">
+                <div class="price-name">Monitor</div>
+                <div class="price-amount">$79</div>
+                <div class="price-period">/month</div>
+                <div class="price-features">
+                    <div class="price-feature"><span class="price-feature-check">✓</span> Real-time alerts</div>
+                    <div class="price-feature"><span class="price-feature-check">✓</span> Security dashboard</div>
+                    <div class="price-feature"><span class="price-feature-check">✓</span> 3 deployments</div>
+                    <div class="price-feature"><span class="price-feature-x">✗</span> Pentesting</div>
+                    <div class="price-feature"><span class="price-feature-x">✗</span> Firewall</div>
+                </div>
+                <a href="https://colepresley.gumroad.com/l/shieldclaw-monitor" class="price-btn price-btn-secondary">Get Started</a>
             </div>
 
-            <div class="pricing-grid">
-                <!-- Open Source -->
-                <div class="pricing-card">
-                    <div class="pricing-label">FOR INDIVIDUALS</div>
-                    <h3 class="pricing-name">Open Source</h3>
-                    <p class="pricing-desc">Full power, zero cost. Forever.</p>
-
-                    <div class="pricing-price">
-                        <span class="pricing-amount">$0</span>
-                    </div>
-                    <p class="pricing-note">Free forever • All platforms</p>
-
-                    <ul class="pricing-features">
-                        <li>Works on all platforms</li>
-                        <li>Prompt injection defense</li>
-                        <li>Configuration hardening</li>
-                        <li>Emergency kill switch</li>
-                        <li>Manual security audits</li>
-                        <li>Community support</li>
-                        <li class="disabled">Real-time monitoring</li>
-                        <li class="disabled">Unified dashboard</li>
-                        <li class="disabled">Multi-platform view</li>
-                    </ul>
-
-                    <a href="https://github.com/colepresley000-hub/openclaw-secure" class="pricing-btn">
-                        Start building
-                    </a>
+            <div class="price-card featured">
+                <div class="price-name">Hunt</div>
+                <div class="price-amount" style="color: var(--red);">$199</div>
+                <div class="price-period">/month</div>
+                <div class="price-features">
+                    <div class="price-feature"><span class="price-feature-check">✓</span> Everything in Monitor</div>
+                    <div class="price-feature"><span class="price-feature-check">✓</span> Weekly pentesting</div>
+                    <div class="price-feature"><span class="price-feature-check">✓</span> AI-generated fixes</div>
+                    <div class="price-feature"><span class="price-feature-check">✓</span> 50+ attack scenarios</div>
+                    <div class="price-feature"><span class="price-feature-x">✗</span> Firewall / MCP</div>
                 </div>
+                <a href="https://shieldclaw.xyz/hunt" class="price-btn price-btn-primary">Start Free Trial →</a>
+            </div>
 
-                <!-- Monitor -->
-                <div class="pricing-card featured">
-                    <div class="pricing-label">FOR TEAMS</div>
-                    <h3 class="pricing-name">Monitor</h3>
-                    <p class="pricing-desc">24/7 protection across all platforms.</p>
-
-                    <div class="pricing-price">
-                        <span class="pricing-amount">$79</span>
-                        <span class="pricing-period">/month</span>
-                    </div>
-                    <p class="pricing-note">14-day trial • All platforms included</p>
-
-                    <ul class="pricing-features">
-                        <li>Everything in Open Source</li>
-                        <li>Real-time threat monitoring</li>
-                        <li>Automated drift detection</li>
-                        <li>Unified dashboard</li>
-                        <li>Multi-platform view</li>
-                        <li>CVE vulnerability alerts</li>
-                        <li>All notification channels</li>
-                        <li>5 deployments (any platform)</li>
-                        <li>10K API calls/day</li>
-                        <li>30-day event history</li>
-                        <li>Priority support</li>
-                    </ul>
-
-                    <a href="mailto:support@shieldclaw.xyz?subject=Start Monitor Trial" class="pricing-btn">
-                        Start free trial
-                    </a>
+            <div class="price-card">
+                <div class="price-name">Firewall + Frontier</div>
+                <div class="price-amount">$599</div>
+                <div class="price-period">/month · Hunt included</div>
+                <div class="price-features">
+                    <div class="price-feature"><span class="price-feature-check">✓</span> Everything in Hunt</div>
+                    <div class="price-feature"><span class="price-feature-check">✓</span> Real-time Firewall</div>
+                    <div class="price-feature"><span class="price-feature-check">✓</span> Frontier Translation</div>
+                    <div class="price-feature"><span class="price-feature-check">✓</span> SOC2 / HIPAA reports</div>
+                    <div class="price-feature"><span class="price-feature-x">✗</span> Shield-MCP</div>
                 </div>
+                <a href="mailto:cole@shieldclaw.xyz" class="price-btn price-btn-secondary">Contact Us</a>
+            </div>
 
-                <!-- Enterprise -->
-                <div class="pricing-card">
-                    <div class="pricing-label">FOR ENTERPRISES</div>
-
-                <!-- Hunt Tier (NEW) -->
-                <div class="pricing-card featured">
-                    <div class="pricing-label">OFFENSIVE SECURITY</div>
-                    <h3 class="pricing-name">Hunt 🗡️</h3>
-                    <p class="pricing-desc">AI-powered pentesting + monitoring</p>
-
-                    <div class="pricing-price">
-                        <span class="pricing-amount">$199</span>
-                        <span class="pricing-period">/month</span>
-                    </div>
-                    <p class="pricing-note">14-day trial • Weekly scans + auto-fixes</p>
-
-                    <ul class="pricing-features">
-                        <li>Everything in Monitor</li>
-                        <li>Weekly attack simulations (50+ scenarios)</li>
-                        <li>AI-generated security patches</li>
-                        <li>Auto-fix code generation</li>
-                        <li>Security score dashboard (A-F grades)</li>
-                        <li>Compliance reports (SOC2, HIPAA, GDPR)</li>
-                        <li>Bug bounty platform access</li>
-                        <li>10 deployments (any platform)</li>
-                        <li>50K API calls/day</li>
-                        <li>Priority support (<12hr response)</li>
-                    </ul>
-
-                    <a href="https://colepresley.gumroad.com/l/shieldclaw-monitor" class="pricing-btn">
-                        Start free trial
-                    </a>
+            <div class="price-card" style="background: rgba(155,93,229,0.03);">
+                <div class="price-name">Shield-MCP</div>
+                <div class="price-amount" style="color: #9b5de5; font-size: 36px;">Custom</div>
+                <div class="price-period">Enterprise · from $1,499/mo</div>
+                <div class="price-features">
+                    <div class="price-feature"><span class="price-feature-check">✓</span> Full product suite</div>
+                    <div class="price-feature"><span class="price-feature-check">✓</span> Shield-MCP server</div>
+                    <div class="price-feature"><span class="price-feature-check">✓</span> All models supported</div>
+                    <div class="price-feature"><span class="price-feature-check">✓</span> White-label option</div>
+                    <div class="price-feature"><span class="price-feature-check">✓</span> Dedicated support</div>
                 </div>
-
-                    <h3 class="pricing-name">Enterprise</h3>
-                    <p class="pricing-desc">Unlimited platforms, unlimited scale.</p>
-
-                    <div class="pricing-price">
-                        <span class="pricing-amount">Custom</span>
-                    </div>
-                    <p class="pricing-note">Talk to sales</p>
-
-                    <ul class="pricing-features">
-                        <li>Everything in Monitor</li>
-                        <li>Unlimited deployments</li>
-                        <li>Unlimited platforms</li>
-                        <li>White-label dashboard</li>
-                        <li>Custom integrations</li>
-                        <li>SSO/SAML</li>
-                        <li>SOC2 compliance package</li>
-                        <li>99.99% SLA</li>
-                        <li>24/7 phone support</li>
-                        <li>Dedicated CSM</li>
-                        <li>On-premise deployment</li>
-                    </ul>
-
-                    <a href="mailto:enterprise@shieldclaw.xyz" class="pricing-btn">
-                        Contact sales
-                    </a>
-                </div>
+                <a href="mailto:cole@shieldclaw.xyz" class="price-btn" style="background: #9b5de5; color: white;">Talk to Sales →</a>
             </div>
         </div>
     </section>
 
-    <!-- Final CTA -->
-    <section class="final-cta">
-        <h2>One layer of security.<br>Infinite deployment options.</h2>
-        <p>Start free on any platform. Upgrade when you need 24/7 monitoring.</p>
-        <a href="https://github.com/colepresley000-hub/openclaw-secure" class="btn btn-primary">
-            <span>Get started now</span>
-            <span>→</span>
-        </a>
-    </section>
+    <!-- CTA -->
+    <div class="cta-section">
+        <div class="cta-title">Ready to secure<br>your AI workforce?</div>
+        <p class="cta-sub">Join the teams that trust ShieldClaw to protect their AI deployments.</p>
+        <div class="cta-actions">
+            <a href="https://shieldclaw.xyz/hunt" class="btn-hero btn-hero-primary">Start Free Trial →</a>
+            <a href="mailto:cole@shieldclaw.xyz" class="btn-hero btn-hero-secondary">Talk to Sales</a>
+        </div>
+    </div>
 
     <!-- Footer -->
     <footer>
-        <div class="footer-content">
-            <div class="footer-section">
-                <h4>Product</h4>
-                <ul>
-                    <li><a href="#features">Features</a></li>
-                    <li><a href="#pricing">Pricing</a></li>
-                    <li><a href="https://github.com/colepresley000-hub/openclaw-secure">Docs</a></li>
-                    <li><a href="https://github.com/colepresley000-hub/openclaw-secure">GitHub</a></li>
-                </ul>
-            </div>
-            <div class="footer-section">
-                <h4>Platforms</h4>
-                <ul>
-                    <li><a href="#">QuickClaw</a></li>
-                    <li><a href="#">Clam</a></li>
-                    <li><a href="#">Self-hosted</a></li>
-                    <li><a href="#">Docker</a></li>
-                    <li><a href="#">Kubernetes</a></li>
-                </ul>
-            </div>
-            <div class="footer-section">
-                <h4>Company</h4>
-                <ul>
-                    <li><a href="mailto:support@shieldclaw.xyz">Contact</a></li>
-                    <li><a href="https://github.com/colepresley000-hub/openclaw-secure/blob/main/SECURITY.md">Security</a></li>
-                    <li><a href="#">Privacy</a></li>
-                    <li><a href="#">Terms</a></li>
-                </ul>
-            </div>
-            <div class="footer-section">
-                <h4>Resources</h4>
-                <ul>
-                    <li><a href="#">Blog</a></li>
-                    <li><a href="#">Changelog</a></li>
-                    <li><a href="#">Status</a></li>
-                </ul>
-            </div>
-        </div>
-
-        <div class="footer-bottom">
-            <p>© 2026 ShieldClaw. Universal security for OpenClaw.</p>
-            <p style="color: var(--text-dim); display: flex; gap: 8px;">
-                Made with <span style="color: #ef4444;">♥</span> for the OpenClaw community
-            </p>
+        <div>© 2026 ShieldClaw. The security standard for AI agents.</div>
+        <div style="display:flex; gap: 32px;">
+            <a href="https://github.com/colepresley000-hub/openclaw-secure">GitHub ↗</a>
+            <a href="https://shieldclaw.xyz/hunt">Dashboard</a>
+            <a href="mailto:cole@shieldclaw.xyz">Contact</a>
         </div>
     </footer>
 
-    <!-- Scripts -->
     <script>
-        // Spotlight
-        const spotlight = document.getElementById('spotlight');
-        let spotlightX = 0, spotlightY = 0;
-        let currentX = 0, currentY = 0;
+        // Live threat feed simulation
+        const threats = [
+            { agent: 'agent-prod-007', action: 'PROMPT INJECTION attempt', status: 'blocked' },
+            { agent: 'claude-worker-1', action: 'read_file → config.env', status: 'allowed' },
+            { agent: 'gpt-agent-3', action: 'db_delete → users table', status: 'blocked' },
+            { agent: 'openclaw-001', action: 'web_search → query', status: 'allowed' },
+            { agent: 'kimi-agent-2', action: 'shell_exec → bash cmd', status: 'blocked' },
+            { agent: 'claude-prod-1', action: 'send_email → external', status: 'blocked' },
+            { agent: 'agent-dev-5', action: 'read_memory → session', status: 'allowed' },
+            { agent: 'gpt-worker-2', action: 'write_secret → vault', status: 'blocked' },
+        ];
 
-        document.addEventListener('mousemove', (e) => {
-            spotlightX = e.clientX;
-            spotlightY = e.clientY;
-        });
+        let feedIndex = 0;
+        const feed = document.getElementById('liveFeed');
 
-        function animate() {
-            currentX += (spotlightX - currentX) * 0.1;
-            currentY += (spotlightY - currentY) * 0.1;
-            
-            spotlight.style.left = currentX - 300 + 'px';
-            spotlight.style.top = currentY - 300 + 'px';
-            
-            requestAnimationFrame(animate);
+        function addFeedRow() {
+            const threat = threats[feedIndex % threats.length];
+            const now = new Date().toLocaleTimeString('en-US', { hour12: false });
+            const row = document.createElement('div');
+            row.className = 'feed-row';
+            row.innerHTML = `
+                <span class="feed-time">${now}</span>
+                <span class="feed-agent">${threat.agent}</span>
+                <span class="feed-action">${threat.action}</span>
+                <span class="feed-status ${threat.status === 'blocked' ? 'status-blocked' : 'status-allowed'}">
+                    ${threat.status === 'blocked' ? '🚫 BLOCKED' : '✅ ALLOWED'}
+                </span>`;
+
+            feed.insertBefore(row, feed.firstChild);
+            if (feed.children.length > 8) feed.removeChild(feed.lastChild);
+
+            feedIndex++;
         }
-        animate();
 
-        // Nav scroll
-        const nav = document.getElementById('nav');
-        window.addEventListener('scroll', () => {
-            if (window.scrollY > 100) {
-                nav.classList.add('scrolled');
-            } else {
-                nav.classList.remove('scrolled');
-            }
-        });
-
-        // Smooth scroll
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                e.preventDefault();
-                const target = document.querySelector(this.getAttribute('href'));
-                if (target) {
-                    target.scrollIntoView({
-                        behavior: 'smooth',
-                        block: 'start'
-                    });
-                }
-            });
-        });
+        // Start feed
+        for (let i = 0; i < 5; i++) addFeedRow();
+        setInterval(addFeedRow, 2500);
     </script>
 </body>
 </html>
