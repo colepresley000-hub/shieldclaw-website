@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShieldClaw Shield-MCP - Universal Permission Layer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background: #0A0A0A;
+            color: #E0E0E0;
+            line-height: 1.6;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #1A1A1A 0%, #0A0A0A 100%);
+            border-bottom: 2px solid #FF2B2B;
+            padding: 1.5rem 2rem;
+        }
+        
+        .header h1 {
+            color: #FFFFFF;
+            font-size: 1.8rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .header p {
+            color: #FF2B2B;
+            font-size: 0.9rem;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-card {
+            background: #1A1A1A;
+            border: 1px solid #2A2A2A;
+            border-radius: 8px;
+            padding: 1.5rem;
+            transition: transform 0.2s;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-2px);
+            border-color: #FF2B2B;
+        }
+        
+        .stat-label {
+            color: #888;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-value {
+            color: #FFFFFF;
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-value.green { color: #4AFF2B; }
+        .stat-value.red { color: #FF2B2B; }
+        .stat-value.yellow { color: #FFD700; }
+        
+        .stat-sublabel {
+            color: #666;
+            font-size: 0.8rem;
+        }
+        
+        .section {
+            background: #1A1A1A;
+            border: 1px solid #2A2A2A;
+            border-radius: 8px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .section-title {
+            color: #FFFFFF;
+            font-size: 1.3rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid #FF2B2B;
+            padding-bottom: 0.5rem;
+        }
+        
+        .agent-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .agent-card {
+            background: #0A0A0A;
+            border: 1px solid #2A2A2A;
+            border-radius: 6px;
+            padding: 1.5rem;
+            position: relative;
+        }
+        
+        .agent-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+        
+        .agent-name {
+            color: #FFFFFF;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+        
+        .agent-id {
+            color: #666;
+            font-size: 0.8rem;
+            font-family: monospace;
+        }
+        
+        .agent-status {
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .status-active { background: #4AFF2B; color: #000; }
+        .status-pending { background: #FFD700; color: #000; }
+        .status-blocked { background: #FF2B2B; color: #FFF; }
+        
+        .permission-tier {
+            display: inline-block;
+            padding: 0.4rem 1rem;
+            background: #FF2B2B;
+            color: #FFFFFF;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin: 0.5rem 0;
+        }
+        
+        .tier-read { background: #4AFF2B; color: #000; }
+        .tier-write { background: #FFD700; color: #000; }
+        .tier-admin { background: #FF2B2B; }
+        
+        .tool-list {
+            margin-top: 1rem;
+        }
+        
+        .tool-category {
+            color: #888;
+            font-size: 0.85rem;
+            margin: 0.75rem 0 0.5rem 0;
+            font-weight: 600;
+        }
+        
+        .tool-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.4rem 0;
+            color: #E0E0E0;
+            font-size: 0.9rem;
+        }
+        
+        .tool-allowed { color: #4AFF2B; }
+        .tool-blocked { color: #FF2B2B; }
+        .tool-pending { color: #FFD700; }
+        
+        .btn {
+            background: #FF2B2B;
+            color: #FFFFFF;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 1rem;
+            width: 100%;
+        }
+        
+        .btn:hover {
+            background: #CC2222;
+        }
+        
+        .btn-secondary {
+            background: transparent;
+            border: 1px solid #FF2B2B;
+            color: #FF2B2B;
+        }
+        
+        .btn-secondary:hover {
+            background: #FF2B2B;
+            color: #FFFFFF;
+        }
+        
+        .policy-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+        
+        .policy-table th {
+            background: #0A0A0A;
+            color: #FF2B2B;
+            text-align: left;
+            padding: 1rem;
+            font-weight: 600;
+            border-bottom: 2px solid #FF2B2B;
+        }
+        
+        .policy-table td {
+            padding: 1rem;
+            border-bottom: 1px solid #2A2A2A;
+        }
+        
+        .policy-table tr:hover {
+            background: #0A0A0A;
+        }
+        
+        .timestamp {
+            color: #888;
+            font-family: monospace;
+            font-size: 0.85rem;
+        }
+        
+        .action-btn-group {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+        
+        .action-btn-group button {
+            flex: 1;
+            padding: 0.5rem;
+            font-size: 0.85rem;
+        }
+        
+        .flow-diagram {
+            background: #0A0A0A;
+            border: 1px solid #2A2A2A;
+            border-radius: 6px;
+            padding: 2rem;
+            margin: 1.5rem 0;
+        }
+        
+        .flow-step {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+        
+        .flow-box {
+            background: #1A1A1A;
+            border: 2px solid #2A2A2A;
+            padding: 1rem;
+            border-radius: 6px;
+            flex: 1;
+            text-align: center;
+        }
+        
+        .flow-box.highlight {
+            border-color: #FF2B2B;
+            background: #2A0A0A;
+        }
+        
+        .flow-arrow {
+            color: #FF2B2B;
+            font-size: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🗡️ ShieldClaw Shield-MCP</h1>
+        <p>Universal Permission Layer for AI Agents - Zero Trust Architecture</p>
+    </div>
+    
+    <div class="container">
+        <!-- Stats Overview -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Registered Agents</div>
+                <div class="stat-value">47</div>
+                <div class="stat-sublabel">23 active, 19 pending, 5 blocked</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-label">Requests Today</div>
+                <div class="stat-value green">128,492</div>
+                <div class="stat-sublabel">14 blocked by policy</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-label">Policy Enforcement</div>
+                <div class="stat-value green">Active</div>
+                <div class="stat-sublabel">Default deny mode</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-label">Avg Response Time</div>
+                <div class="stat-value">1.2ms</div>
+                <div class="stat-sublabel">p99: 2.4ms</div>
+            </div>
+        </div>
+        
+        <!-- How It Works -->
+        <div class="section">
+            <h2 class="section-title">How Shield-MCP Works</h2>
+            
+            <div class="flow-diagram">
+                <div class="flow-step">
+                    <div class="flow-box">
+                        <strong>AI Agent</strong><br>
+                        <small>Claude, GPT, Kimi, OpenClaw</small>
+                    </div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-box highlight">
+                        <strong>Shield-MCP</strong><br>
+                        <small>Permission Check</small>
+                    </div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-box">
+                        <strong>Your Tools</strong><br>
+                        <small>Database, Slack, Files</small>
+                    </div>
+                </div>
+            </div>
+            
+            <p style="color: #888; margin-top: 1rem;">
+                Every agent request passes through Shield-MCP before accessing your tools. 
+                Zero-trust architecture means default deny - agents must be explicitly permitted.
+            </p>
+        </div>
+        
+        <!-- Registered Agents -->
+        <div class="section">
+            <h2 class="section-title">Registered Agents</h2>
+            
+            <div class="agent-grid">
+                <!-- Agent 1 -->
+                <div class="agent-card">
+                    <div class="agent-header">
+                        <div>
+                            <div class="agent-name">Production Agent</div>
+                            <div class="agent-id">agent-prod-001</div>
+                        </div>
+                        <span class="agent-status status-active">ACTIVE</span>
+                    </div>
+                    
+                    <div class="permission-tier tier-admin">Admin Access</div>
+                    
+                    <div class="tool-list">
+                        <div class="tool-category">Allowed Tools</div>
+                        <div class="tool-item">
+                            <span class="tool-allowed">✓</span> Database (Read/Write)
+                        </div>
+                        <div class="tool-item">
+                            <span class="tool-allowed">✓</span> Slack (Send Messages)
+                        </div>
+                        <div class="tool-item">
+                            <span class="tool-allowed">✓</span> File System (Read)
+                        </div>
+                        
+                        <div class="tool-category">Blocked Tools</div>
+                        <div class="tool-item">
+                            <span class="tool-blocked">✗</span> SSH (No Access)
+                        </div>
+                        <div class="tool-item">
+                            <span class="tool-blocked">✗</span> Email (No Access)
+                        </div>
+                    </div>
+                    
+                    <div class="action-btn-group">
+                        <button class="btn btn-secondary">Edit Policy</button>
+                        <button class="btn btn-secondary">View Audit Log</button>
+                    </div>
+                </div>
+                
+                <!-- Agent 2 -->
+                <div class="agent-card">
+                    <div class="agent-header">
+                        <div>
+                            <div class="agent-name">Development Agent</div>
+                            <div class="agent-id">agent-dev-003</div>
+                        </div>
+                        <span class="agent-status status-pending">PENDING</span>
+                    </div>
+                    
+                    <div class="permission-tier tier-read">Read-Only</div>
+                    
+                    <div class="tool-list">
+                        <div class="tool-category">Requested Tools</div>
+                        <div class="tool-item">
+                            <span class="tool-pending">⏳</span> Database (Read)
+                        </div>
+                        <div class="tool-item">
+                            <span class="tool-pending">⏳</span> API Gateway (Invoke)
+                        </div>
+                    </div>
+                    
+                    <div class="action-btn-group">
+                        <button class="btn">Approve</button>
+                        <button class="btn btn-secondary">Deny</button>
+                    </div>
+                </div>
+                
+                <!-- Agent 3 -->
+                <div class="agent-card">
+                    <div class="agent-header">
+                        <div>
+                            <div class="agent-name">Analytics Agent</div>
+                            <div class="agent-id">agent-analytics-007</div>
+                        </div>
+                        <span class="agent-status status-active">ACTIVE</span>
+                    </div>
+                    
+                    <div class="permission-tier tier-read">Read-Only</div>
+                    
+                    <div class="tool-list">
+                        <div class="tool-category">Allowed Tools</div>
+                        <div class="tool-item">
+                            <span class="tool-allowed">✓</span> Database (Read)
+                        </div>
+                        <div class="tool-item">
+                            <span class="tool-allowed">✓</span> Analytics API (Query)
+                        </div>
+                    </div>
+                    
+                    <div class="action-btn-group">
+                        <button class="btn btn-secondary">Edit Policy</button>
+                        <button class="btn btn-secondary">View Audit Log</button>
+                    </div>
+                </div>
+                
+                <!-- Agent 4 -->
+                <div class="agent-card">
+                    <div class="agent-header">
+                        <div>
+                            <div class="agent-name">Suspicious Agent</div>
+                            <div class="agent-id">agent-unknown-999</div>
+                        </div>
+                        <span class="agent-status status-blocked">BLOCKED</span>
+                    </div>
+                    
+                    <p style="color: #FF2B2B; margin-top: 1rem; font-size: 0.9rem;">
+                        ⚠️ Agent not registered. All requests denied by default.
+                    </p>
+                    
+                    <button class="btn btn-secondary" style="margin-top: 1rem;">Review & Register</button>
+                </div>
+            </div>
+            
+            <button class="btn" style="max-width: 300px; margin-top: 2rem;">+ Register New Agent</button>
+        </div>
+        
+        <!-- Recent Activity -->
+        <div class="section">
+            <h2 class="section-title">Recent Permission Checks</h2>
+            
+            <table class="policy-table">
+                <thead>
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>Agent</th>
+                        <th>Tool Requested</th>
+                        <th>Decision</th>
+                        <th>Reason</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="timestamp">2026-02-23 17:43:22</td>
+                        <td>agent-prod-001</td>
+                        <td>database.query</td>
+                        <td><span style="color: #4AFF2B;">✓ ALLOWED</span></td>
+                        <td>Within policy</td>
+                    </tr>
+                    <tr>
+                        <td class="timestamp">2026-02-23 17:43:18</td>
+                        <td>agent-dev-003</td>
+                        <td>slack.send_message</td>
+                        <td><span style="color: #FF2B2B;">✗ DENIED</span></td>
+                        <td>Agent not approved</td>
+                    </tr>
+                    <tr>
+                        <td class="timestamp">2026-02-23 17:43:11</td>
+                        <td>agent-unknown-999</td>
+                        <td>ssh.execute</td>
+                        <td><span style="color: #FF2B2B;">✗ DENIED</span></td>
+                        <td>Agent not registered</td>
+                    </tr>
+                    <tr>
+                        <td class="timestamp">2026-02-23 17:42:55</td>
+                        <td>agent-analytics-007</td>
+                        <td>database.query</td>
+                        <td><span style="color: #4AFF2B;">✓ ALLOWED</span></td>
+                        <td>Within policy</td>
+                    </tr>
+                    <tr>
+                        <td class="timestamp">2026-02-23 17:42:41</td>
+                        <td>agent-prod-001</td>
+                        <td>file.delete</td>
+                        <td><span style="color: #FF2B2B;">✗ DENIED</span></td>
+                        <td>Delete not permitted</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- API Integration -->
+        <div class="section">
+            <h2 class="section-title">API Integration</h2>
+            <p style="margin-bottom: 1rem; color: #888;">
+                Configure your AI agents to request permission through Shield-MCP before tool access.
+            </p>
+            
+            <div style="background: #0A0A0A; padding: 1.5rem; border-radius: 6px; font-family: monospace; font-size: 0.9rem; overflow-x: auto;">
+<span style="color: #FF2B2B;">POST</span> https://shieldclaw-mcp.vercel.app/check
+
+<span style="color: #888;"># Headers</span>
+Authorization: Bearer YOUR_API_KEY
+Content-Type: application/json
+
+<span style="color: #888;"># Body</span>
+{
+  "agent_id": "agent-prod-001",
+  "tool": "database.query",
+  "action": "read",
+  "resource": "customers_table"
+}
+
+<span style="color: #888;"># Response</span>
+{
+  "allowed": true,
+  "reason": "within_policy",
+  "rate_limit_remaining": 9847
+}
+            </div>
+            
+            <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                <button class="btn">Get API Key</button>
+                <button class="btn btn-secondary">View Documentation</button>
+                <button class="btn btn-secondary">Download SDK</button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
