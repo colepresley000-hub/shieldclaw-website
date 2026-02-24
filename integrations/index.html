@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Integrations - ShieldClaw</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background: #0A0A0A;
+            color: #E0E0E0;
+            line-height: 1.6;
+        }
+        
+        .header {
+            background: #0A0A0A;
+            border-bottom: 1px solid #2A2A2A;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #FFFFFF;
+            text-decoration: none;
+        }
+        
+        .shield-icon {
+            width: 32px;
+            height: 32px;
+            background: #2B7CFF;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 3rem 2rem;
+        }
+        
+        .hero {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+        
+        .hero h1 {
+            font-size: 3rem;
+            color: #FFFFFF;
+            margin-bottom: 1rem;
+        }
+        
+        .hero p {
+            font-size: 1.2rem;
+            color: #888;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .integrations-grid {
+            display: grid;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+        
+        .integration-card {
+            background: #1A1A1A;
+            border: 1px solid #2A2A2A;
+            border-radius: 12px;
+            padding: 2rem;
+            transition: all 0.2s;
+        }
+        
+        .integration-card:hover {
+            border-color: #2B7CFF;
+            transform: translateY(-2px);
+        }
+        
+        .integration-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .integration-icon {
+            width: 48px;
+            height: 48px;
+            background: #2A2A2A;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+        
+        .integration-title {
+            flex: 1;
+        }
+        
+        .integration-title h3 {
+            font-size: 1.5rem;
+            color: #FFFFFF;
+            margin-bottom: 0.25rem;
+        }
+        
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.25rem 0.75rem;
+            background: rgba(43, 124, 255, 0.1);
+            border: 1px solid #2B7CFF;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            color: #2B7CFF;
+            font-weight: 600;
+        }
+        
+        .benefit {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #4AFF2B;
+            font-size: 0.95rem;
+            margin: 1rem 0;
+        }
+        
+        .benefit::before {
+            content: "✓";
+            font-weight: bold;
+        }
+        
+        .buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+        
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s;
+            cursor: pointer;
+            border: none;
+        }
+        
+        .btn-primary {
+            background: #2B7CFF;
+            color: #FFFFFF;
+        }
+        
+        .btn-primary:hover {
+            background: #1E5FCC;
+        }
+        
+        .btn-secondary {
+            background: transparent;
+            color: #E0E0E0;
+            border: 1px solid #2A2A2A;
+        }
+        
+        .btn-secondary:hover {
+            border-color: #2B7CFF;
+            color: #2B7CFF;
+        }
+        
+        .section-title {
+            color: #2B7CFF;
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            padding-left: 1rem;
+            border-left: 3px solid #2B7CFF;
+        }
+        
+        .support-item {
+            background: #1A1A1A;
+            border: 1px solid #2A2A2A;
+            border-radius: 8px;
+            padding: 1.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+        
+        .support-item-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .support-icon {
+            width: 40px;
+            height: 40px;
+            background: #2A2A2A;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .support-name {
+            font-size: 1.1rem;
+            color: #FFFFFF;
+        }
+        
+        .status-badge {
+            padding: 0.35rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        .status-sdk {
+            background: rgba(43, 124, 255, 0.1);
+            color: #2B7CFF;
+        }
+        
+        .status-universal {
+            background: rgba(74, 255, 43, 0.1);
+            color: #4AFF2B;
+        }
+        
+        .request-section {
+            background: #1A1A1A;
+            border: 2px dashed #2A2A2A;
+            border-radius: 12px;
+            padding: 3rem;
+            text-align: center;
+            margin-top: 3rem;
+        }
+        
+        .request-section h3 {
+            font-size: 1.5rem;
+            color: #FFFFFF;
+            margin-bottom: 0.75rem;
+        }
+        
+        .request-section p {
+            color: #888;
+            margin-bottom: 2rem;
+        }
+        
+        .btn-request {
+            background: #FFFFFF;
+            color: #0A0A0A;
+            padding: 1rem 2rem;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .btn-request:hover {
+            background: #E0E0E0;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <a href="/" class="logo">
+            <div class="shield-icon">🛡️</div>
+            ShieldClaw
+        </a>
+        <div style="font-size: 1.5rem; cursor: pointer;">☰</div>
+    </div>
+    
+    <div class="container">
+        <div class="hero">
+            <h1>Works With Everything</h1>
+            <p>Seamlessly integrate ShieldClaw's security layer into your existing AI workflows and development pipelines.</p>
+        </div>
+        
+        <div class="integrations-grid">
+            <!-- Claude Code -->
+            <div class="integration-card">
+                <div class="integration-header">
+                    <div class="integration-icon">📝</div>
+                    <div class="integration-title">
+                        <h3>Claude Code</h3>
+                        <span class="badge">✓ INTEGRATED</span>
+                    </div>
+                </div>
+                <div class="benefit">Blocks 98% of unauthorized file operations</div>
+                <div class="buttons">
+                    <a href="#" class="btn btn-primary">View Demo</a>
+                    <a href="#" class="btn btn-secondary">Setup Guide</a>
+                </div>
+            </div>
+            
+            <!-- OpenClaw -->
+            <div class="integration-card">
+                <div class="integration-header">
+                    <div class="integration-icon">🦅</div>
+                    <div class="integration-title">
+                        <h3>OpenClaw</h3>
+                        <span class="badge">✓ INTEGRATED</span>
+                    </div>
+                </div>
+                <div class="benefit">From 15/100 to 94/100 security score in 60 seconds</div>
+                <div class="buttons">
+                    <a href="#" class="btn btn-primary">View Demo</a>
+                    <a href="#" class="btn btn-secondary">Setup Guide</a>
+                </div>
+            </div>
+            
+            <!-- GPT -->
+            <div class="integration-card">
+                <div class="integration-header">
+                    <div class="integration-icon">GPT</div>
+                    <div class="integration-title">
+                        <h3>GPT</h3>
+                        <span class="badge">✓ INTEGRATED</span>
+                    </div>
+                </div>
+                <div class="benefit">SOC2/HIPAA compliant audit trails</div>
+                <div class="buttons">
+                    <a href="#" class="btn btn-primary">View Demo</a>
+                    <a href="#" class="btn btn-secondary">Setup Guide</a>
+                </div>
+            </div>
+            
+            <!-- Kimi -->
+            <div class="integration-card">
+                <div class="integration-header">
+                    <div class="integration-icon">🌐</div>
+                    <div class="integration-title">
+                        <h3>Kimi</h3>
+                        <span class="badge">✓ INTEGRATED</span>
+                    </div>
+                </div>
+                <div class="benefit">Multi-model permission enforcement</div>
+                <div class="buttons">
+                    <a href="#" class="btn btn-primary">View Demo</a>
+                    <a href="#" class="btn btn-secondary">Setup Guide</a>
+                </div>
+            </div>
+        </div>
+        
+        <h2 class="section-title">Broad Support</h2>
+        
+        <div class="support-item">
+            <div class="support-item-left">
+                <div class="support-icon">🔗</div>
+                <div class="support-name">LangChain</div>
+            </div>
+            <span class="status-badge status-sdk">✓ SDK AVAILABLE</span>
+        </div>
+        
+        <div class="support-item">
+            <div class="support-item-left">
+                <div class="support-icon">🤖</div>
+                <div class="support-name">AutoGPT</div>
+            </div>
+            <span class="status-badge status-sdk">✓ SDK AVAILABLE</span>
+        </div>
+        
+        <div class="support-item">
+            <div class="support-item-left">
+                <div class="support-icon">⚙️</div>
+                <div class="support-name">Custom Systems</div>
+            </div>
+            <span class="status-badge status-universal">✓ UNIVERSAL SUPPORT</span>
+        </div>
+        
+        <div class="request-section">
+            <h3>Can't find your tool?</h3>
+            <p>Our engineers are constantly building new integrations to secure the AI future.</p>
+            <a href="mailto:cole@shieldclaw.xyz" class="btn-request">Request Integration</a>
+        </div>
+    </div>
+</body>
+</html>
