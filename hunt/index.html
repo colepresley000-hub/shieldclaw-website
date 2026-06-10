@@ -905,8 +905,8 @@
     </div>
 
     <script>
-        // API Configuration
-        const API_BASE = 'https://shieldclaw-hunt.vercel.app';
+        // API Configuration — V2 scanner lives on Railway
+        const API_BASE = 'https://shieldclaw-hunt-production-b839.up.railway.app';
         
         // State
         let currentData = null;
@@ -941,52 +941,74 @@
             alert(`✅ Deployment "${deployment.name}" added!\n\nClick "Run New Scan" to test it.`);
         }
         
-        // Load scan results on page load
-        window.addEventListener('DOMContentLoaded', () => {
-            loadScanResults();
-        });
+        // The V2 API has no /api/results endpoint — results only exist
+        // for the scan you just ran, so the page shows demo data until
+        // the user clicks "Run New Scan".
         
-        // Load scan results from API
-        async function loadScanResults() {
-            try {
-                showLoading();
-                const response = await fetch(`${API_BASE}/api/results`);
-                
-                if (!response.ok) {
-                    // No scan results yet, show demo data
-                    hideLoading();
-                    return;
-                }
-                
-                currentData = await response.json();
-                renderScanResults(currentData);
-                hideLoading();
-            } catch (error) {
-                console.error('Failed to load scan results:', error);
-                hideLoading();
-            }
+        // V2 helpers — the API returns a flat vulnerabilities array
+        // (no stats/summary object), so counts are computed client-side.
+        function getVulns(data) {
+            return Array.isArray(data && data.vulnerabilities) ? data.vulnerabilities : [];
         }
-        
-        // Render scan results
+
+        function countBySeverity(vulns, severity) {
+            return vulns.filter(v => String(v && v.severity || '').toLowerCase() === severity).length;
+        }
+
+        function isAgentScan(data) {
+            return data && data.scan_type === 'full_agent_security';
+        }
+
+        // Render scan results (V2 response shape)
         function renderScanResults(data) {
+            data = data || {};
+            const vulns = getVulns(data);
+            const score = typeof data.score === 'number' ? data.score : 0;
+            const grade = data.grade || 'N/A';
+
             // Update score
             const scoreCircle = document.querySelector('.score-circle');
-            scoreCircle.style.setProperty('--score', data.score);
-            document.querySelector('.score-value').textContent = data.score;
-            document.querySelector('.score-grade').textContent = `Grade: ${data.grade}`;
-            
+            scoreCircle.style.setProperty('--score', score);
+            document.querySelector('.score-value').textContent = score;
+            document.querySelector('.score-grade').textContent = `Grade: ${grade}`;
+
             // Update timestamp
-            const timestamp = new Date(data.timestamp).toLocaleString();
+            const timestamp = data.timestamp ? new Date(data.timestamp).toLocaleString() : 'just now';
             document.querySelector('.score-subtitle').textContent = `Last scan: ${timestamp}`;
-            
-            // Update stats
-            document.querySelector('.stat-value.critical').textContent = data.stats.critical;
-            document.querySelector('.stat-value.high').textContent = data.stats.high;
-            document.querySelector('.stat-value.medium').textContent = data.stats.medium;
-            document.querySelector('.stat-value.success').textContent = data.stats.total_tests;
-            
-            // Render vulnerabilities
-            renderVulnerabilities(data.vulnerabilities);
+
+            // Update stats — counted from the vulnerabilities array
+            const totalTests = Object.keys(data.checks || {}).length;
+            document.querySelector('.stat-value.critical').textContent = countBySeverity(vulns, 'critical');
+            document.querySelector('.stat-value.high').textContent = countBySeverity(vulns, 'high');
+            document.querySelector('.stat-value.medium').textContent = countBySeverity(vulns, 'medium');
+            document.querySelector('.stat-value.success').textContent = totalTests;
+
+            if (!isAgentScan(data)) {
+                renderNotAgentGateway(data);
+            } else {
+                renderVulnerabilities(vulns);
+            }
+        }
+
+        // Shown when the scanned URL isn't an AI agent gateway
+        // (scan_type "basic_web_security", grade "N/A")
+        function renderNotAgentGateway(data) {
+            const checks = data.checks || {};
+            const checksHtml = Object.entries(checks).map(([name, check]) => {
+                const passed = check && check.passed;
+                return `<li style="list-style: none;">${passed ? '✅' : '❌'} ${escapeHtml(name.toUpperCase())} ${passed ? 'passed' : 'failed'}</li>`;
+            }).join('');
+
+            const message = data.message || "This URL doesn't appear to be an AI agent gateway. Only basic web security checks were performed.";
+
+            document.getElementById('vulnList').innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-state-icon">🔍</div>
+                    <h3>Not an AI agent gateway</h3>
+                    <p>${escapeHtml(message)}</p>
+                    <ul style="margin-top: 16px; padding: 0;">${checksHtml}</ul>
+                </div>
+            `;
         }
         
         // Render vulnerability cards
@@ -1004,33 +1026,45 @@
                 return;
             }
             
-            container.innerHTML = vulns.map(v => `
-                <div class="vuln-card" data-severity="${v.severity}">
-                    <div class="vuln-header">
-                        <div class="vuln-title-group">
-                            <h3 class="vuln-title">
-                                <span>⚠️</span>
-                                <span>${v.name}</span>
-                            </h3>
-                            <p class="vuln-category">${v.category.replace('_', ' ')}</p>
-                        </div>
-                        <span class="severity-badge severity-${v.severity}">${v.severity}</span>
-                    </div>
-                    <p class="vuln-description">${v.description}</p>
+            container.innerHTML = vulns.map(v => {
+                v = v || {};
+                const severity = String(v.severity || 'medium').toLowerCase();
+                const name = escapeHtml(v.name || v.title || 'Unnamed finding');
+                const category = escapeHtml(String(v.category || 'general').replace(/_/g, ' '));
+                const description = escapeHtml(v.description || '');
+                const impactHtml = v.impact ? `
                     <div class="vuln-impact">
-                        <strong>Impact:</strong> ${v.impact}
-                    </div>
+                        <strong>Impact:</strong> ${escapeHtml(v.impact)}
+                    </div>` : '';
+                const fixHtml = (v.fix && v.fix.code) ? `
                     <div class="vuln-fix">
                         <div class="fix-header">
                             <span class="fix-title">🔧 Auto-Generated Fix Available</span>
-                            <button class="btn-fix" onclick="applyFix(${v.id})">Apply Fix</button>
+                            <button class="btn-fix" onclick="applyFix('${String(v.id || '').replace(/[^a-zA-Z0-9_-]/g, '')}')">Apply Fix</button>
                         </div>
                         <div class="fix-code">
                             <pre>${escapeHtml(v.fix.code)}</pre>
                         </div>
+                    </div>` : '';
+
+                return `
+                <div class="vuln-card" data-severity="${severity}">
+                    <div class="vuln-header">
+                        <div class="vuln-title-group">
+                            <h3 class="vuln-title">
+                                <span>⚠️</span>
+                                <span>${name}</span>
+                            </h3>
+                            <p class="vuln-category">${category}</p>
+                        </div>
+                        <span class="severity-badge severity-${severity}">${severity}</span>
                     </div>
+                    <p class="vuln-description">${description}</p>
+                    ${impactHtml}
+                    ${fixHtml}
                 </div>
-            `).join('');
+            `;
+            }).join('');
         }
         
         // Escape HTML for safe rendering
@@ -1147,48 +1181,50 @@
             }
             
             showLoading();
-            
+
             try {
-                let response;
-                
-                if (deployments.length > 0) {
-                    // REAL SCAN using first deployment
-                    const deployment = deployments[0];
-                    response = await fetch(`${API_BASE}/api/scan`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            gateway_url: deployment.gateway_url,
-                            platform: deployment.platform,
-                            api_token: deployment.api_token
-                        })
-                    });
-                } else {
-                    // DEMO SCAN
-                    response = await fetch(`${API_BASE}/api/scan`);
+                // V2 API takes POST {"url": ...}. If no deployment is
+                // saved, run a demo scan against shieldclaw.xyz itself.
+                const targetUrl = deployments.length > 0
+                    ? deployments[0].gateway_url
+                    : 'https://shieldclaw.xyz';
+
+                const response = await fetch(`${API_BASE}/api/scan`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ url: targetUrl })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Scanner returned HTTP ${response.status}`);
                 }
-                
+
                 const data = await response.json();
-                
+
                 currentData = data;
                 renderScanResults(data);
-                
+
+                const vulns = getVulns(data);
                 const scanType = deployments.length > 0 ? `Real scan of ${deployments[0].name}` : 'Demo scan';
-                alert(`🗡️ Scan complete! (${scanType})\n\nSecurity Score: ${data.score}/100\nGrade: ${data.grade}\n\nFound ${data.stats.vulnerabilities_found} vulnerabilities:\n• Critical: ${data.stats.critical}\n• High: ${data.stats.high}\n• Medium: ${data.stats.medium}`);
+                if (!isAgentScan(data)) {
+                    alert(`🗡️ Scan complete! (${scanType})\n\n${data.message || 'This URL doesn\'t appear to be an AI agent gateway, so only basic web security checks were performed.'}`);
+                } else {
+                    alert(`🗡️ Scan complete! (${scanType})\n\nSecurity Score: ${data.score}/100\nGrade: ${data.grade || 'N/A'}\n\nFound ${vulns.length} vulnerabilities:\n• Critical: ${countBySeverity(vulns, 'critical')}\n• High: ${countBySeverity(vulns, 'high')}\n• Medium: ${countBySeverity(vulns, 'medium')}`);
+                }
             } catch (error) {
                 alert(`❌ Scan failed:\n${error.message}`);
-                hideLoading();
+                document.getElementById('vulnList').innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">⚠️</div>
+                        <h3>Scan failed</h3>
+                        <p>${escapeHtml(error.message)}</p>
+                    </div>
+                `;
             }
         }
 
-        // Auto-refresh every 30 seconds
-        setInterval(() => {
-            if (!document.hidden) {
-                loadScanResults();
-            }
-        }, 30000);
     </script>
 </body>
 </html>
