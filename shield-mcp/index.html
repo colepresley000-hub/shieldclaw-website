@@ -297,31 +297,42 @@
     </div>
     
     <div class="container">
-        <!-- Stats Overview -->
+        <!-- Stats Overview — live from the Shield-MCP control plane -->
         <div class="stats-grid">
             <div class="stat-card">
-                <div class="stat-label">Registered Agents</div>
-                <div class="stat-value">47</div>
-                <div class="stat-sublabel">23 active, 19 pending, 5 blocked</div>
+                <div class="stat-label">Tool Calls Inspected</div>
+                <div class="stat-value" id="stat-total">—</div>
+                <div class="stat-sublabel">across all wrapped MCP servers</div>
             </div>
-            
+
             <div class="stat-card">
-                <div class="stat-label">Requests Today</div>
-                <div class="stat-value green">128,492</div>
-                <div class="stat-sublabel">14 blocked by policy</div>
+                <div class="stat-label">Allowed</div>
+                <div class="stat-value green" id="stat-allowed">—</div>
+                <div class="stat-sublabel">passed policy</div>
             </div>
-            
+
             <div class="stat-card">
-                <div class="stat-label">Policy Enforcement</div>
-                <div class="stat-value green">Active</div>
-                <div class="stat-sublabel">Default deny mode</div>
+                <div class="stat-label">Blocked</div>
+                <div class="stat-value" id="stat-blocked" style="color:#FF2B2B">—</div>
+                <div class="stat-sublabel">denied before reaching tools</div>
             </div>
-            
+
             <div class="stat-card">
-                <div class="stat-label">Avg Response Time</div>
-                <div class="stat-value">1.2ms</div>
-                <div class="stat-sublabel">p99: 2.4ms</div>
+                <div class="stat-label">Pending Approval</div>
+                <div class="stat-value" id="stat-pending" style="color:#FFD700">—</div>
+                <div class="stat-sublabel">held for review (fail-closed)</div>
             </div>
+        </div>
+
+        <!-- Live permission decisions, streamed from wrapped proxies -->
+        <div class="section">
+            <h2 class="section-title">Live Permission Decisions</h2>
+            <p style="color:#888;font-size:14px;margin-bottom:16px">
+                Real decisions reported by <code>shieldclaw-mcp</code> proxies via the control plane.
+                <span id="feed-empty" style="display:none">No decisions yet — wrap an MCP server with
+                <code>shieldclaw-mcp wrap --control-plane &lt;url&gt; -- &lt;server&gt;</code> to populate this.</span>
+            </p>
+            <div id="decision-feed" style="font-family:'SF Mono',Menlo,monospace;font-size:13px"></div>
         </div>
         
         <!-- How It Works -->
@@ -565,5 +576,50 @@ Content-Type: application/json
             </div>
         </div>
     </div>
+    <script>
+        // Live data from the Shield-MCP control plane.
+        const CONTROL_PLANE = 'https://shieldclaw-control-production.up.railway.app';
+        const DECISION_STYLE = {
+            allow: { color: '#4AFF2B', icon: '✓', word: 'ALLOWED' },
+            deny:  { color: '#FF2B2B', icon: '✗', word: 'BLOCKED' },
+            ask:   { color: '#FFD700', icon: '⏳', word: 'PENDING' },
+        };
+
+        async function loadShieldMcp() {
+            try {
+                const [statsRes, eventsRes] = await Promise.all([
+                    fetch(`${CONTROL_PLANE}/api/stats`),
+                    fetch(`${CONTROL_PLANE}/api/events?limit=20`),
+                ]);
+                const stats = await statsRes.json();
+                const { events } = await eventsRes.json();
+
+                document.getElementById('stat-total').textContent = (stats.total ?? 0).toLocaleString();
+                document.getElementById('stat-allowed').textContent = (stats.allowed ?? 0).toLocaleString();
+                document.getElementById('stat-blocked').textContent = (stats.blocked ?? 0).toLocaleString();
+                document.getElementById('stat-pending').textContent = (stats.pending ?? 0).toLocaleString();
+
+                const feed = document.getElementById('decision-feed');
+                document.getElementById('feed-empty').style.display = events.length ? 'none' : 'inline';
+                feed.innerHTML = events.map(e => {
+                    const s = DECISION_STYLE[e.decision] || DECISION_STYLE.deny;
+                    const t = e.ts ? new Date(e.ts).toLocaleTimeString() : '';
+                    const esc = x => String(x ?? '').replace(/[<>&]/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]));
+                    return `<div style="padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.06)">
+                        <span style="color:#666">${esc(t)}</span>
+                        <span style="color:#aaa;margin:0 10px">${esc(e.agent)}</span>
+                        <span style="color:#ddd">${esc(e.tool)}</span>
+                        <span style="color:${s.color};float:right">${s.icon} ${s.word}</span>
+                    </div>`;
+                }).join('');
+            } catch (err) {
+                document.getElementById('feed-empty').style.display = 'inline';
+                document.getElementById('feed-empty').textContent = 'Control plane unreachable.';
+            }
+        }
+
+        loadShieldMcp();
+        setInterval(loadShieldMcp, 15000);
+    </script>
 </body>
 </html>
